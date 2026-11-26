@@ -139,8 +139,6 @@ func (a *App) pageMods(w http.ResponseWriter, r *http.Request) {
 	}
 	if in != nil {
 		data["Instance"] = *in
-		mods, _ := a.Store.ListMods(r.Context(), in.ID)
-		data["Mods"] = mods
 		query := r.URL.Query().Get("q")
 		data["Query"] = query
 		gv := in.Version
@@ -148,6 +146,8 @@ func (a *App) pageMods(w http.ResponseWriter, r *http.Request) {
 			gv = r.URL.Query().Get("gv")
 		}
 		data["GameVersion"] = gv
+		mods, _ := a.Store.ListMods(r.Context(), in.ID)
+		data["Mods"] = buildModViews(mods, gv)
 		if query != "" {
 			results, err := a.ModDB.Search(r.Context(), query, gv, 20)
 			if err != nil {

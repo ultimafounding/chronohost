@@ -76,7 +76,7 @@ rebuilding anything.
 | Dashboard | Start, stop, restart and kill worlds. Watch online players, game day, season, storms, CPU and memory. |
 | World wizard | Four steps covering identity, terrain, survival rules and a final JSON preview. Presets get you going quickly; every setting stays editable. |
 | Versions | Fetches official stable and unstable feeds, downloads verified binaries and caches them under `/data/binaries`. |
-| Mods | Searches ModDB, checks version compatibility, extracts dependencies and handles enable/disable. |
+| Mods | Searches ModDB, checks version compatibility, installs declared dependencies, tracks missing requirements and guards dependent removals. |
 | Backups | Scheduled tar.gz snapshots with grandfathered retention and a restore flow that stashes the live world first. |
 | Console | Live WebSocket log with history and command input for operators and admins. |
 | Access control | Viewer, operator and admin roles, an audit trail, and Discord alerts for the interesting moments. |

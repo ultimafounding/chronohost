@@ -504,6 +504,7 @@ tbody tr:nth-child(even) { background: rgba(199, 154, 91, .035); }
 .badge.warn { color: var(--amber); border-color: var(--amber); background: rgba(210, 164, 90, .1); }
 .badge.bad { color: var(--red); border-color: var(--red); background: rgba(208, 106, 99, .1); }
 .badge.idle { color: var(--muted); }
+.badge-row { display: flex; flex-wrap: wrap; gap: .25rem; }
 .dot {
   width: 7px;
   height: 7px;

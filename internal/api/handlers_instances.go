@@ -160,15 +160,15 @@ func (a *App) apiCreateInstance(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	for _, m := range req.Mods {
-		installed, warnings, err := a.installMod(r.Context(), in, m.ModID, m.ReleaseID)
+		out, err := a.installMod(r.Context(), in, m.ModID, m.ReleaseID)
 		if err != nil {
 			a.Log.Printf("install mod %d during creation: %v", m.ModID, err)
 			continue
 		}
-		for _, warning := range warnings {
+		for _, warning := range out.Warnings {
 			a.Log.Printf("mod warning: %s", warning)
 		}
-		a.Log.Printf("installed %s %s", installed.Name, installed.Version)
+		a.Log.Printf("installed %s %s (%d mods total)", out.Mod.Name, out.Mod.Version, len(out.Installed))
 	}
 	if req.Start {
 		spec, err := a.specFor(in)

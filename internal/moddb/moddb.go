@@ -20,10 +20,24 @@ import (
 const defaultBase = "https://mods.vintagestory.at"
 
 // Dependency is a mod dependency declared in a mod's modinfo.json.
+// Legacy array entries omit "enabled", which means enabled.
 type Dependency struct {
 	ModID   string `json:"modid"`
 	Version string `json:"version"`
 	Enabled bool   `json:"enabled"`
+}
+
+func (d *Dependency) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		ModID   string `json:"modid"`
+		Version string `json:"version"`
+		Enabled *bool  `json:"enabled"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*d = Dependency{ModID: raw.ModID, Version: raw.Version, Enabled: raw.Enabled == nil || *raw.Enabled}
+	return nil
 }
 
 // DependencyList accepts both dependency encodings found in the wild:

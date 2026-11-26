@@ -65,18 +65,51 @@ type Backup struct {
 	Files      []string  `json:"files"`
 }
 
+// ModDependency is a dependency declared in a mod's modinfo.json. ResolvedID
+// is the ModDB numeric id found when the dependency was installed; older
+// records may leave it at zero.
+type ModDependency struct {
+	ModID      string `json:"modId"`
+	Version    string `json:"version,omitempty"`
+	ResolvedID int    `json:"resolvedId,omitempty"`
+}
+
+// UnmarshalJSON accepts both the legacy string form and the current object
+// form so existing databases keep working.
+func (d *ModDependency) UnmarshalJSON(data []byte) error {
+	var id string
+	if err := json.Unmarshal(data, &id); err == nil {
+		*d = ModDependency{ModID: id}
+		return nil
+	}
+	var raw struct {
+		ModID      string `json:"modId"`
+		LowerModID string `json:"modid"`
+		Version    string `json:"version"`
+		ResolvedID int    `json:"resolvedId"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*d = ModDependency{ModID: raw.ModID, Version: raw.Version, ResolvedID: raw.ResolvedID}
+	if d.ModID == "" {
+		d.ModID = raw.LowerModID
+	}
+	return nil
+}
+
 // Mod is a mod installed into an instance.
 type Mod struct {
-	ID           int64     `json:"id"`
-	InstanceID   string    `json:"instanceId"`
-	ModID        int       `json:"modId"`
-	Name         string    `json:"name"`
-	Version      string    `json:"version"`
-	Filename     string    `json:"filename"`
-	GameVersions []string  `json:"gameVersions"`
-	Pinned       bool      `json:"pinned"`
-	Dependencies []string  `json:"dependencies"`
-	InstalledAt  time.Time `json:"installedAt"`
+	ID           int64           `json:"id"`
+	InstanceID   string          `json:"instanceId"`
+	ModID        int             `json:"modId"`
+	Name         string          `json:"name"`
+	Version      string          `json:"version"`
+	Filename     string          `json:"filename"`
+	GameVersions []string        `json:"gameVersions"`
+	Pinned       bool            `json:"pinned"`
+	Dependencies []ModDependency `json:"dependencies"`
+	InstalledAt  time.Time       `json:"installedAt"`
 }
 
 // Schedule is a recurring job for an instance.
