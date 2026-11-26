@@ -115,7 +115,10 @@ type Mod struct {
 	Tags         []string `json:"tags"`
 	LastReleased string   `json:"lastreleased"`
 	Downloads    int      `json:"downloads"`
+	Follows      int      `json:"follows"`
 	URLAlias     string   `json:"urlalias"`
+	ModIDStrs    []string `json:"modidstrs"`
+	Type         string   `json:"type"`
 }
 
 // Release is one release listed in a mod's detail response.
@@ -193,6 +196,9 @@ func (c *Client) Search(ctx context.Context, query, gameVersion string, limit in
 		return nil, fmt.Errorf("moddb: search failed (status %s): %s", resp.StatusCode, resp.Message)
 	}
 	mods := resp.Mods
+	if query != "" {
+		rankMods(mods, query)
+	}
 	if limit > 0 && len(mods) > limit {
 		mods = mods[:limit]
 	}
@@ -200,6 +206,126 @@ func (c *Client) Search(ctx context.Context, query, gameVersion string, limit in
 		mods = []Mod{}
 	}
 	return mods, nil
+}
+
+// rankMods puts exact name and alias matches ahead of the ModDB's default
+// newest-first order. The API returns every text match, so without this a
+// popular mod such as Carry On can be buried behind dozens of newer addons
+// and truncated by the caller's result limit.
+func rankMods(mods []Mod, query string) {
+	queryCompact := compactText(query)
+	if queryCompact == "" {
+		return
+	}
+	queryTokens := textTokens(query)
+
+	type scored struct {
+		mod   Mod
+		score int
+	}
+	ranked := make([]scored, len(mods))
+	for i, m := range mods {
+		ranked[i] = scored{mod: m, score: searchScore(m, queryCompact, queryTokens)}
+	}
+	sort.SliceStable(ranked, func(i, j int) bool {
+		if ranked[i].score != ranked[j].score {
+			return ranked[i].score > ranked[j].score
+		}
+		if ranked[i].mod.Downloads != ranked[j].mod.Downloads {
+			return ranked[i].mod.Downloads > ranked[j].mod.Downloads
+		}
+		if ranked[i].mod.Follows != ranked[j].mod.Follows {
+			return ranked[i].mod.Follows > ranked[j].mod.Follows
+		}
+		return false
+	})
+	for i := range ranked {
+		mods[i] = ranked[i].mod
+	}
+}
+
+func compactText(s string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(s) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func textTokens(s string) []string {
+	return strings.FieldsFunc(strings.ToLower(s), func(r rune) bool {
+		return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'))
+	})
+}
+
+func containsTokens(haystack string, tokens []string) bool {
+	if len(tokens) == 0 {
+		return false
+	}
+	for _, token := range tokens {
+		if token == "" || !strings.Contains(haystack, token) {
+			return false
+		}
+	}
+	return true
+}
+
+func searchScore(m Mod, queryCompact string, queryTokens []string) int {
+	score := 0
+	bump := func(value int) {
+		if value > score {
+			score = value
+		}
+	}
+
+	if name := compactText(m.Name); name != "" {
+		switch {
+		case name == queryCompact:
+			bump(1200)
+		case strings.HasPrefix(name, queryCompact):
+			bump(900)
+		case strings.Contains(name, queryCompact):
+			bump(700)
+		}
+		if containsTokens(name, queryTokens) {
+			bump(500)
+		}
+	}
+
+	aliases := append([]string{m.URLAlias}, m.ModIDStrs...)
+	for _, raw := range aliases {
+		alias := compactText(raw)
+		if alias == "" {
+			continue
+		}
+		switch {
+		case alias == queryCompact:
+			bump(1100)
+		case strings.HasPrefix(alias, queryCompact):
+			bump(800)
+		case strings.Contains(alias, queryCompact):
+			bump(600)
+		}
+		if containsTokens(alias, queryTokens) {
+			bump(450)
+		}
+	}
+
+	if strings.Contains(compactText(m.Summary), queryCompact) {
+		bump(120)
+	}
+	for _, tag := range m.Tags {
+		if strings.Contains(compactText(tag), queryCompact) {
+			bump(80)
+			break
+		}
+	}
+	if strings.Contains(compactText(m.Author), queryCompact) {
+		bump(60)
+	}
+	return score
 }
 
 // Detail fetches a single mod by numeric ID or URL alias.

@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -61,6 +62,51 @@ func TestSearchAndDetail(t *testing.T) {
 	}
 	if got := c.Compatible(d, "1.20.0"); len(got) != 0 {
 		t.Fatalf("compatible 1.20 = %+v", got)
+	}
+}
+
+func TestSearchRanksExactMatchesFirst(t *testing.T) {
+	cases := []struct {
+		query string
+		name  string
+		alias string
+		id    int
+	}{
+		{query: "better ruins", name: "BetterRuins", alias: "betterruins", id: 792},
+		{query: "carry on", name: "Carry On", alias: "carryon", id: 890},
+	}
+	for _, tc := range cases {
+		t.Run(tc.query, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/api/mods" {
+					http.NotFound(w, r)
+					return
+				}
+				fmt.Fprint(w, `{"statuscode":"200","mods":[`)
+				for i := 0; i < 30; i++ {
+					if i > 0 {
+						fmt.Fprint(w, ",")
+					}
+					fmt.Fprintf(w, `{"modid":%d,"name":%q,"urlalias":%q,"modidstrs":[%q],"downloads":%d}`,
+						1000+i, tc.query+" Addon "+strconv.Itoa(i), "addon"+strconv.Itoa(i), "addon"+strconv.Itoa(i), i)
+				}
+				fmt.Fprintf(w, `,{"modid":%d,"name":%q,"urlalias":%q,"modidstrs":[%q],"downloads":1251007}]}`,
+					tc.id, tc.name, tc.alias, tc.alias)
+			}))
+			defer srv.Close()
+
+			c := NewClient(srv.URL, nil)
+			mods, err := c.Search(context.Background(), tc.query, "", 5)
+			if err != nil {
+				t.Fatalf("Search: %v", err)
+			}
+			if len(mods) != 5 {
+				t.Fatalf("len(mods) = %d", len(mods))
+			}
+			if mods[0].ModID != tc.id || mods[0].Name != tc.name {
+				t.Fatalf("first result = %+v, want %q", mods[0], tc.name)
+			}
+		})
 	}
 }
 
