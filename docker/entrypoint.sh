@@ -3,7 +3,7 @@
 set -eu
 
 : "${CHRONOHOST_DATA:=/data}"
-: "${CHRONOHOST_ADDR:=:8080}"
+: "${CHRONOHOST_ADDR:=:3620}"
 export CHRONOHOST_DATA CHRONOHOST_ADDR
 
 mkdir -p \

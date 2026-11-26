@@ -12,14 +12,14 @@ cp .env.example .env      # change CHRONOHOST_ADMIN_PASSWORD
 docker compose up -d --build
 ```
 
-Open <http://localhost:8080> and sign in with the credentials from `.env`.
+Open <http://localhost:3620> and sign in with the credentials from `.env`.
 The fallback credentials are `admin` / `chronohost` — set the password before
 exposing the portal.
 
 From source, without Docker:
 
 ```bash
-go run ./cmd/chronohost -data ./data -addr :8080
+go run ./cmd/chronohost -data ./data -addr :3620
 ```
 
 ## Configuration
@@ -27,7 +27,7 @@ go run ./cmd/chronohost -data ./data -addr :8080
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `CHRONOHOST_DATA` | `/data` | Persistent root (binaries, instances, backups, db). |
-| `CHRONOHOST_ADDR` | `:8080` | HTTP listen address. |
+| `CHRONOHOST_ADDR` | `:3620` | HTTP listen address. |
 | `CHRONOHOST_ADMIN_USER` | `admin` | Bootstrap administrator username. |
 | `CHRONOHOST_ADMIN_PASSWORD` | `chronohost` | Bootstrap administrator password. |
 | `TZ` | `UTC` | Timezone used by schedules and timestamps. |
@@ -150,7 +150,7 @@ gofmt -w ./cmd ./internal
 go build ./...
 go test ./...
 go vet ./...
-go run ./cmd/chronohost -data ./data -addr :8080
+go run ./cmd/chronohost -data ./data -addr :3620
 ```
 
 Go 1.26+ is required. HTMX and Alpine are vendored under

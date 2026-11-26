@@ -19,7 +19,7 @@ import (
 func main() {
 	logger := log.New(os.Stdout, "chronohost: ", log.LstdFlags|log.Lmsgprefix)
 
-	addr := flag.String("addr", envOr("CHRONOHOST_ADDR", ":8080"), "HTTP listen address")
+	addr := flag.String("addr", envOr("CHRONOHOST_ADDR", ":3620"), "HTTP listen address")
 	root := flag.String("data", envOr("CHRONOHOST_DATA", "/data"), "persistent data root")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()

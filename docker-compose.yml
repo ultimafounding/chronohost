@@ -8,7 +8,7 @@ services:
 
     ports:
       # Web portal
-      - "8080:8080"
+      - "3620:3620"
       # Vintage Story game instances (match the portal's default port range)
       - "42420-42430:42420-42430/tcp"
       - "42420-42430:42420-42430/udp"
@@ -19,7 +19,7 @@ services:
 
     environment:
       CHRONOHOST_DATA: /data
-      CHRONOHOST_ADDR: ":8080"
+      CHRONOHOST_ADDR: ":3620"
       CHRONOHOST_ADMIN_USER: ${CHRONOHOST_ADMIN_USER:-admin}
       CHRONOHOST_ADMIN_PASSWORD: ${CHRONOHOST_ADMIN_PASSWORD:-chronohost}
       TZ: ${TZ:-UTC}
