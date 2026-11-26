@@ -3,39 +3,39 @@
 {{template "nav" .}}
 <div class="page-head">
   <div><h1>Temporal Rollbacks</h1><p>Compressed world snapshots with grandfather–father–son retention, and one-click restore.</p></div>
-  <div class="actions"><a class="btn" href="/">← Dashboard</a></div>
+  <div class="actions"><a class="btn" href="/" data-tip="Return to the dashboard">← Dashboard</a></div>
 </div>
 {{template "alerts" .}}
 
 <div class="card">
   <form method="get" action="/backups">
     <div class="field-row">
-      <div class="field"><label>Instance</label>
+      <div class="field" data-tip="Choose the world whose snapshots you want to browse or restore."><label>Instance</label>
         <select name="instance">
           {{range $in := .Instances}}<option value="{{$in.ID}}" {{if $.Instance}}{{if eq $.Instance.ID $in.ID}}selected{{end}}{{end}}>{{$in.Name}}</option>{{end}}
         </select>
       </div>
-      <div class="field" style="display:flex;align-items:end"><button class="btn primary" type="submit">Load snapshots</button></div>
+      <div class="field" style="display:flex;align-items:end"><button class="btn primary" data-tip="Loads the snapshot list for the selected world." type="submit">Load snapshots</button></div>
     </div>
   </form>
 </div>
 
 {{if not .Instances}}
-  <div class="empty"><h3>No instances yet</h3><p>Create a world first, then schedule its snapshots here.</p><a class="btn primary" href="/instances/new">Make a Server</a></div>
+  <div class="empty"><h3>No instances yet</h3><p>Create a world first, then schedule its snapshots here.</p><a class="btn primary" href="/instances/new" data-tip="Open the world creation wizard">Make a Server</a></div>
 {{else}}
 {{if .Instance}}
 <div class="grid cols-4" style="margin-bottom:1.25rem">
-  <div class="card stat"><span class="value">{{.Policy.Hourly}}</span><span class="label">Hourly kept</span></div>
-  <div class="card stat"><span class="value">{{.Policy.Daily}}</span><span class="label">Daily kept</span></div>
-  <div class="card stat"><span class="value">{{.Policy.Weekly}}</span><span class="label">Weekly kept</span></div>
-  <div class="card stat"><span class="value">{{.Policy.Monthly}}</span><span class="label">Monthly kept</span></div>
+  <div class="card stat" data-tip="Most recent hourly snapshots kept before older ones are pruned."><span class="value">{{.Policy.Hourly}}</span><span class="label">Hourly kept</span></div>
+  <div class="card stat" data-tip="Daily snapshots kept after the hourly copies expire."><span class="value">{{.Policy.Daily}}</span><span class="label">Daily kept</span></div>
+  <div class="card stat" data-tip="Weekly snapshots kept from the daily pool."><span class="value">{{.Policy.Weekly}}</span><span class="label">Weekly kept</span></div>
+  <div class="card stat" data-tip="Monthly snapshots kept long term."><span class="value">{{.Policy.Monthly}}</span><span class="label">Monthly kept</span></div>
 </div>
 
 <div class="card">
   <h2>Snapshots for {{.Instance.Name}}</h2>
   <div class="btn-row" style="margin-bottom:.8rem">
-    <button class="btn primary" data-action data-url="/api/instances/{{.Instance.ID}}/backups" data-body='{"kind":"manual"}' data-success="Snapshot created" data-reload="true">Create manual snapshot</button>
-    <a class="btn" href="/instances/{{.Instance.ID}}">Open live console →</a>
+    <button class="btn primary" data-tip="Captures saves, config and mods right now. A .vcdbs save must exist first." data-action data-url="/api/instances/{{.Instance.ID}}/backups" data-body='{"kind":"manual"}' data-success="Snapshot created" data-reload="true">Create manual snapshot</button>
+    <a class="btn" href="/instances/{{.Instance.ID}}" data-tip="Open this world's console and management tabs">Open live console →</a>
   </div>
   {{if .Backups}}
   <div class="table-wrap"><table>
@@ -49,8 +49,8 @@
         <td class="mono">{{join $b.Files ", "}}</td>
         <td>
           <div class="btn-row">
-            <button class="btn small" data-action data-url="/api/instances/{{$.Instance.ID}}/backups/{{$b.ID}}/restore" data-body='{"confirm":true,"restart":true}' data-confirm="Restore {{$b.Name}}? The server will be stopped and the current world stashed." data-success="World restored" data-reload="true">Restore</button>
-            <button class="btn small danger" data-action data-method="DELETE" data-url="/api/instances/{{$.Instance.ID}}/backups/{{$b.ID}}" data-confirm="Delete snapshot {{$b.Name}} permanently?" data-success="Snapshot deleted" data-reload="true">Delete</button>
+            <button class="btn small" data-tip="Stops the server, stashes the live world, unpacks this snapshot and restarts." data-action data-url="/api/instances/{{$.Instance.ID}}/backups/{{$b.ID}}/restore" data-body='{"confirm":true,"restart":true}' data-confirm="Restore {{$b.Name}}? The server will be stopped and the current world stashed." data-success="World restored" data-reload="true">Restore</button>
+            <button class="btn small danger" data-tip="Permanently deletes this snapshot archive." data-action data-method="DELETE" data-url="/api/instances/{{$.Instance.ID}}/backups/{{$b.ID}}" data-confirm="Delete snapshot {{$b.Name}} permanently?" data-success="Snapshot deleted" data-reload="true">Delete</button>
           </div>
         </td>
       </tr>

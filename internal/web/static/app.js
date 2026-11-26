@@ -40,6 +40,66 @@ window.CH = {
   }
 };
 
+// Shared hover/focus tooltip. A fixed bubble avoids clipping inside scrollable tables.
+(function () {
+  let bubble = null;
+  let current = null;
+
+  function ensureBubble() {
+    if (bubble) return bubble;
+    bubble = document.createElement('div');
+    bubble.className = 'tooltip-box';
+    bubble.setAttribute('role', 'tooltip');
+    bubble.style.display = 'none';
+    document.body.appendChild(bubble);
+    return bubble;
+  }
+
+  function place(el) {
+    if (!current || !bubble) return;
+    const r = el.getBoundingClientRect();
+    if (!r.width && !r.height) { hide(); return; }
+    const gap = 8;
+    const x = Math.max(gap, Math.min(r.left + r.width / 2 - bubble.offsetWidth / 2, window.innerWidth - bubble.offsetWidth - gap));
+    let y = r.top - bubble.offsetHeight - gap;
+    if (y < gap) y = r.bottom + gap;
+    bubble.style.left = x + 'px';
+    bubble.style.top = y + 'px';
+  }
+
+  function show(el) {
+    const text = el.getAttribute('data-tip');
+    if (!text) return;
+    current = el;
+    const tip = ensureBubble();
+    tip.textContent = text;
+    tip.style.display = 'block';
+    place(el);
+  }
+
+  function hide() {
+    current = null;
+    if (bubble) bubble.style.display = 'none';
+  }
+
+  document.addEventListener('pointerover', (e) => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el && el !== current) show(el);
+  });
+  document.addEventListener('pointermove', () => { if (current) place(current); });
+  document.addEventListener('pointerout', (e) => {
+    if (current && !(e.relatedTarget && current.contains(e.relatedTarget))) hide();
+  });
+  document.addEventListener('focusin', (e) => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el && el !== current) show(el);
+  });
+  document.addEventListener('focusout', (e) => {
+    if (current && !(e.relatedTarget && current.contains(e.relatedTarget))) hide();
+  });
+  window.addEventListener('scroll', () => { if (current) place(current); }, true);
+})();
+
 document.addEventListener('htmx:responseError', (e) => {
   const msg = e.detail.xhr && e.detail.xhr.responseText ? e.detail.xhr.responseText.slice(0, 200) : 'Request failed';
   CH.toast(msg, 'error');

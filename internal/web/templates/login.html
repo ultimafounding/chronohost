@@ -8,15 +8,15 @@
     {{template "alerts" .}}
     <form method="post" action="/login">
       <input type="hidden" name="next" value="{{.Next}}">
-      <div class="field">
+      <div class="field" data-tip="Your ChronoHost account name, set on first boot or created by an administrator.">
         <label for="username">Username</label>
         <input id="username" name="username" autocomplete="username" required autofocus>
       </div>
-      <div class="field">
+      <div class="field" data-tip="Your account password. Sessions last 24 hours before you must sign in again.">
         <label for="password">Password</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required>
       </div>
-      <button class="btn primary" type="submit" style="width:100%">Sign in</button>
+      <button class="btn primary" type="submit" style="width:100%" data-tip="Sign in with your ChronoHost account">Sign in</button>
     </form>
     <p class="hint" style="margin-top:1rem">Credentials come from <code>CHRONOHOST_ADMIN_USER</code> and <code>CHRONOHOST_ADMIN_PASSWORD</code>. Without those variables, the fallback is <code>admin</code> / <code>chronohost</code> — change it before exposing the portal.</p>
   </div>

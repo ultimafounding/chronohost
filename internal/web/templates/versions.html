@@ -9,7 +9,7 @@
         <td class="mono">{{$rel.Filename}}</td>
         <td class="mono">{{$rel.Size}}</td>
         <td><span class="badge idle">{{$rel.Channel}}</span></td>
-        <td><button class="btn small primary" data-action data-url="/api/versions/download" data-body='{"version":"{{$rel.Version}}","channel":"{{$rel.Channel}}"}' data-success="Downloading {{$rel.Version}}" data-reload="true">Download</button></td>
+        <td><button class="btn small primary" data-tip="Downloads from the official feed, verifies the published MD5 and extracts into /data/binaries." data-action data-url="/api/versions/download" data-body='{"version":"{{$rel.Version}}","channel":"{{$rel.Channel}}"}' data-success="Downloading {{$rel.Version}}" data-reload="true">Download</button></td>
       </tr>
       {{end}}
     </tbody>
@@ -22,7 +22,7 @@
 {{template "nav" .}}
 <div class="page-head">
   <div><h1>Version Manager</h1><p>Download and cache official Vintage Story server builds. Both .NET 8 and .NET 10 runtimes are bundled in the image.</p></div>
-  <div class="actions"><span class="badge ok">Latest stable: {{default .Latest "unknown"}}</span></div>
+  <div class="actions"><span class="badge ok" data-tip="The newest stable build reported by the official Vintage Story feed">Latest stable: {{default .Latest "unknown"}}</span></div>
 </div>
 {{template "alerts" .}}
 
@@ -33,7 +33,7 @@
   <h2>Cached builds <small class="muted">{{len .Cached}} available locally</small></h2>
   {{if .Cached}}
   <div class="btn-row">
-    {{range $v := .Cached}}<span class="badge ok mono">{{$v}}</span>{{end}}
+    {{range $v := .Cached}}<span class="badge ok mono" data-tip="Already cached offline and selectable in the creation wizard.">{{$v}}</span>{{end}}
   </div>
   {{else}}<p class="muted">No builds downloaded yet. Pick a version below to cache it.</p>{{end}}
 </div>

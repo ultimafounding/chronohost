@@ -3,29 +3,30 @@
 {{template "nav" .}}
 <div class="page-head">
   <div><h1>Users &amp; Access</h1><p>Role-based control: viewers read, operators control servers, administrators manage everything.</p></div>
-  <div class="actions"><a class="btn" href="/settings">← Settings</a></div>
+  <div class="actions"><a class="btn" href="/settings" data-tip="Return to portal settings">← Settings</a></div>
 </div>
 {{template "alerts" .}}
 
 <div class="grid cols-2">
   <div class="card">
     <h2>Add user</h2>
-    <div class="field"><label>Username</label><input id="new-username" autocomplete="off"></div>
-    <div class="field"><label>Password</label><input id="new-password" type="password" autocomplete="new-password"></div>
-    <div class="field"><label>Role</label><select id="new-role">
+    <p class="muted">Hover any ⓘ for an explanation.</p>
+    <div class="field" data-tip="The name this person uses to sign in. Must be unique."><label>Username</label><input id="new-username" autocomplete="off"></div>
+    <div class="field" data-tip="A strong, private password. It is stored as a bcrypt hash, not in plain text."><label>Password</label><input id="new-password" type="password" autocomplete="new-password"></div>
+    <div class="field" data-tip="Viewer reads, Operator controls servers, Admin manages users and settings."><label>Role</label><select id="new-role">
       <option value="viewer">Viewer — read only</option>
       <option value="operator">Operator — start/stop/console</option>
       <option value="admin">Administrator — full access</option>
     </select></div>
-    <button class="btn primary" @click="createUser()">Create user</button>
+    <button class="btn primary" data-tip="Creates the account with the role selected above." @click="createUser()">Create user</button>
   </div>
 
   <div class="card">
     <h2>Role reference</h2>
     <dl class="kv">
-      <dt>Viewer</dt><dd>Dashboard, logs, telemetry, config preview</dd>
-      <dt>Operator</dt><dd>Viewer + lifecycle, commands, mods, backups, schedules</dd>
-      <dt>Admin</dt><dd>Operator + users, settings, config edits, deletion, versions</dd>
+      <dt data-tip="Read-only access to dashboards, logs, telemetry and configuration">Viewer</dt><dd>Dashboard, logs, telemetry, config preview</dd>
+      <dt data-tip="Can start, stop, command, mod, back up and schedule worlds">Operator</dt><dd>Viewer + lifecycle, commands, mods, backups, schedules</dd>
+      <dt data-tip="Full control including users, settings, config edits and builds">Admin</dt><dd>Operator + users, settings, config edits, deletion, versions</dd>
     </dl>
     <p class="hint" style="margin-top:1rem">At least one administrator is always kept. Sessions expire after 24 hours.</p>
   </div>
@@ -39,15 +40,15 @@
       <tr>
         <td><strong>{{$u.Username}}</strong>{{if eq $u.Username $.User.Username}} <span class="badge ok">you</span>{{end}}</td>
         <td>
-          <select data-user-role="{{$u.ID}}">
+          <select data-user-role="{{$u.ID}}" data-tip="Change this user's role, then click Save role in the same row.">
             {{range $r := $.Roles}}<option value="{{$r}}" {{if eq $u.Role $r}}selected{{end}}>{{$r}}</option>{{end}}
           </select>
         </td>
         <td>{{formatTime $u.CreatedAt}}</td>
         <td>
           <div class="btn-row">
-            <button class="btn small" data-action data-url="/api/users/{{$u.ID}}" data-role-target="{{$u.ID}}" data-success="Role saved" data-reload="true">Save role</button>
-            <button class="btn small danger" data-action data-method="DELETE" data-url="/api/users/{{$u.ID}}" data-confirm="Delete {{$u.Username}}?" data-success="User deleted" data-reload="true">Delete</button>
+            <button class="btn small" data-tip="Saves the role selected for this user." data-action data-url="/api/users/{{$u.ID}}" data-role-target="{{$u.ID}}" data-success="Role saved" data-reload="true">Save role</button>
+            <button class="btn small danger" data-tip="Permanently removes this account. At least one admin is always kept." data-action data-method="DELETE" data-url="/api/users/{{$u.ID}}" data-confirm="Delete {{$u.Username}}?" data-success="User deleted" data-reload="true">Delete</button>
           </div>
         </td>
       </tr>

@@ -9,29 +9,29 @@
       &nbsp; <span class="mono muted">{{$in.Version}} · port {{$in.Port}} · {{$in.GameMode}} · {{$in.PlayStyle}}</span></p>
   </div>
   <div class="actions" x-data="controls()">
-    <button class="btn primary" x-show="status!=='running'" @click="act('start')">▶ Start</button>
-    <button class="btn" x-show="status==='running'" @click="act('stop')">■ Stop</button>
-    <button class="btn" x-show="status==='running'" @click="act('restart')">↻ Restart</button>
-    <button class="btn danger" x-show="status!=='stopped'" @click="CH.confirm('Force kill the server? Unsaved changes may be lost.', () => act('kill'))">Kill</button>
-    <a class="btn" href="/backups?instance={{$in.ID}}">↺ Backups</a>
+    <button class="btn primary" data-tip="Launches this world and generates it if no save exists yet." x-show="status!=='running'" @click="act('start')">▶ Start</button>
+    <button class="btn" data-tip="Asks the server to shut down cleanly and save the world." x-show="status==='running'" @click="act('stop')">■ Stop</button>
+    <button class="btn" data-tip="Stops and immediately starts the server again." x-show="status==='running'" @click="act('restart')">↻ Restart</button>
+    <button class="btn danger" data-tip="Force-kills the process. Unsaved changes may be lost." x-show="status!=='stopped'" @click="CH.confirm('Force kill the server? Unsaved changes may be lost.', () => act('kill'))">Kill</button>
+    <a class="btn" data-tip="Opens snapshots and one-click restore for this world." href="/backups?instance={{$in.ID}}">↺ Backups</a>
   </div>
 </div>
 {{template "alerts" .}}
 
 <div class="grid cols-4" style="margin-bottom:1.25rem">
-  <div class="card stat"><span class="value" id="tel-online">{{.Telemetry.Online}}</span><span class="label">Players online</span></div>
-  <div class="card stat"><span class="value" id="tel-day">{{if .Telemetry.GameDay}}{{.Telemetry.GameDay}}{{else}}—{{end}}</span><span class="label">Game day</span></div>
-  <div class="card stat"><span class="value" id="tel-cpu">{{printf "%.1f" .Telemetry.CPU}}%</span><span class="label">CPU</span></div>
-  <div class="card stat"><span class="value" id="tel-mem">{{.Telemetry.MemoryMB}} MB</span><span class="label">Memory</span></div>
+  <div class="card stat" data-tip="Players currently connected, refreshed every 5 seconds."><span class="value" id="tel-online">{{.Telemetry.Online}}</span><span class="label">Players online</span></div>
+  <div class="card stat" data-tip="Current in-game day reported by the server."><span class="value" id="tel-day">{{if .Telemetry.GameDay}}{{.Telemetry.GameDay}}{{else}}—{{end}}</span><span class="label">Game day</span></div>
+  <div class="card stat" data-tip="CPU usage of the game process."><span class="value" id="tel-cpu">{{printf "%.1f" .Telemetry.CPU}}%</span><span class="label">CPU</span></div>
+  <div class="card stat" data-tip="Resident memory used by the game process."><span class="value" id="tel-mem">{{.Telemetry.MemoryMB}} MB</span><span class="label">Memory</span></div>
 </div>
 
 <div x-data="{ tab: 'console' }">
   <div class="tabs">
-    <button :class="{'active': tab==='console'}" @click="tab='console'">Live Console</button>
-    <button :class="{'active': tab==='mods'}" @click="tab='mods'">Mods ({{len .Mods}})</button>
-    <button :class="{'active': tab==='backups'}" @click="tab='backups'">Rollbacks ({{len .Backups}})</button>
-    <button :class="{'active': tab==='config'}" @click="tab='config'">serverconfig.json</button>
-    <button :class="{'active': tab==='schedule'}" @click="tab='schedule'">Schedules ({{len .Schedules}})</button>
+    <button data-tip="Live log stream with command input." :class="{'active': tab==='console'}" @click="tab='console'">Live Console</button>
+    <button data-tip="Mods installed in this instance." :class="{'active': tab==='mods'}" @click="tab='mods'">Mods ({{len .Mods}})</button>
+    <button data-tip="World snapshots and quick restore." :class="{'active': tab==='backups'}" @click="tab='backups'">Rollbacks ({{len .Backups}})</button>
+    <button data-tip="Advanced raw configuration editor." :class="{'active': tab==='config'}" @click="tab='config'">serverconfig.json</button>
+    <button data-tip="Recurring backup, restart and announcement jobs." :class="{'active': tab==='schedule'}" @click="tab='schedule'">Schedules ({{len .Schedules}})</button>
   </div>
 
   <section x-show="tab==='console'" class="card">
@@ -40,14 +40,14 @@
       {{range $line := .Logs}}<div class="line {{$line.Level}}"><time>{{$line.Time.Format "15:04:05"}}</time><span class="text">{{$line.Text}}</span></div>{{end}}
     </div>
     <div class="console-input">
-      <input id="console-command" placeholder="/listplayers" x-on:keydown.enter="sendCommand()">
-      <button class="btn" @click="sendCommand()">Send</button>
+      <span data-tip="Type a server command, for example /listplayers, then press Enter." style="flex:1"><input id="console-command" placeholder="/listplayers" x-on:keydown.enter="sendCommand()"></span>
+      <button class="btn" data-tip="Sends the command to the running server." @click="sendCommand()">Send</button>
     </div>
     <p class="hint">Type a server command and press Enter. Available to operators and administrators.</p>
   </section>
 
   <section x-show="tab==='mods'" class="card">
-    <h2>Installed mods <a class="btn small" href="/mods?instance={{$in.ID}}">Browse ModDB →</a></h2>
+    <h2>Installed mods <a class="btn small" href="/mods?instance={{$in.ID}}" data-tip="Search ModDB and install mods into this world">Browse ModDB →</a></h2>
     {{if .Mods}}
     <div class="table-wrap"><table>
       <thead><tr><th>Mod</th><th>Version</th><th>Game versions</th><th>File</th><th>Status</th><th></th></tr></thead>
@@ -58,18 +58,18 @@
           <td class="mono">{{join $m.GameVersions ", "}}</td>
           <td class="mono">{{$m.Filename}}</td>
           <td>{{if $m.Pinned}}<span class="badge ok">pinned</span>{{else}}<span class="badge idle">auto</span>{{end}}</td>
-          <td><button class="btn small danger" data-action data-method="DELETE" data-url="/api/instances/{{$in.ID}}/mods/{{$m.ID}}" data-confirm="Disable and remove {{$m.Name}}?" data-success="Mod disabled" data-reload="true">Remove</button></td>
+          <td><button class="btn small danger" data-tip="Disables this mod by moving its archive to ModsDisabled." data-action data-method="DELETE" data-url="/api/instances/{{$in.ID}}/mods/{{$m.ID}}" data-confirm="Disable and remove {{$m.Name}}?" data-success="Mod disabled" data-reload="true">Remove</button></td>
         </tr>
       {{end}}</tbody>
     </table></div>
-    {{else}}<div class="empty">No mods installed yet. <a href="/mods?instance={{$in.ID}}">Browse ModDB</a>.</div>{{end}}
+    {{else}}<div class="empty">No mods installed yet. <a href="/mods?instance={{$in.ID}}" data-tip="Search ModDB and install mods into this world">Browse ModDB</a>.</div>{{end}}
   </section>
 
   <section x-show="tab==='backups'" class="card">
     <h2>Temporal rollbacks</h2>
     <div class="btn-row" style="margin-bottom:.8rem">
-      <button class="btn primary small" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/backups" data-body='{"kind":"manual"}' data-success="Snapshot created" data-reload="true">Create snapshot</button>
-      <a class="btn small" href="/backups?instance={{$in.ID}}">Open rollback manager →</a>
+      <button class="btn primary small" data-tip="Captures the current save, config and mods as a tar.gz snapshot." data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/backups" data-body='{"kind":"manual"}' data-success="Snapshot created" data-reload="true">Create snapshot</button>
+      <a class="btn small" data-tip="Opens the full rollback manager with restore and delete." href="/backups?instance={{$in.ID}}">Open rollback manager →</a>
     </div>
     {{if .Backups}}
     <div class="table-wrap"><table><thead><tr><th>Snapshot</th><th>Kind</th><th>Size</th><th>Created</th></tr></thead><tbody>
@@ -81,26 +81,26 @@
   <section x-show="tab==='config'" class="card">
     <h2>serverconfig.json</h2>
     <p class="muted">Advanced editing. Stop the server before saving changes.</p>
-    <textarea id="config-editor" rows="18" class="mono" style="font-size:12px">{{.ConfigJSON}}</textarea>
+    <textarea id="config-editor" data-tip="Raw serverconfig.json. Stop the server before saving to avoid the game overwriting it." rows="18" class="mono" style="font-size:12px">{{.ConfigJSON}}</textarea>
     <div class="btn-row" style="margin-top:.7rem">
-      <button class="btn primary" @click="saveConfig()">Save configuration</button>
-      <button class="btn" @click="location.reload()">Discard</button>
+      <button class="btn primary" data-tip="Writes this JSON to serverconfig.json after validating it." @click="saveConfig()">Save configuration</button>
+      <button class="btn" data-tip="Reloads the page and discards unsaved edits." @click="location.reload()">Discard</button>
     </div>
   </section>
 
   <section x-show="tab==='schedule'" class="card">
     <h2>Recurring jobs</h2>
     <div class="field-row">
-      <div class="field"><label>Job type</label><select id="job-kind"><option value="backup">Backup</option><option value="restart">Restart</option><option value="announce">Announce</option></select></div>
-      <div class="field"><label>Cron expression <span class="hint">or @every 6h</span></label><input id="job-expr" value="0 3 * * *"></div>
-      <div class="field"><label>Announcement text</label><input id="job-message" placeholder="Temporal stability is nominal"></div>
-      <div class="field" style="display:flex;align-items:end"><button class="btn primary" @click="addJob()">Add schedule</button></div>
+      <div class="field" data-tip="Backup creates a snapshot, Restart reboots the server, Announce posts a message in game."><label>Job type</label><select id="job-kind"><option value="backup">Backup</option><option value="restart">Restart</option><option value="announce">Announce</option></select></div>
+      <div class="field" data-tip="Five-field cron or shorthands like @daily and @every 6h, evaluated in the container timezone."><label>Cron expression <span class="hint">or @every 6h</span></label><input id="job-expr" value="0 3 * * *"></div>
+      <div class="field" data-tip="Message broadcast to players for Announce jobs. Restart jobs also warn 60 seconds ahead."><label>Announcement text</label><input id="job-message" placeholder="Temporal stability is nominal"></div>
+      <div class="field" style="display:flex;align-items:end"><button class="btn primary" data-tip="Saves this recurring job for the instance." @click="addJob()">Add schedule</button></div>
     </div>
     {{if .Schedules}}
     <div class="table-wrap"><table><thead><tr><th>Kind</th><th>Expression</th><th>Message</th><th>Last run</th><th></th></tr></thead><tbody>
       {{range $j := .Schedules}}<tr>
         <td>{{$j.Kind}}</td><td class="mono">{{$j.Expr}}</td><td>{{$j.Message}}</td><td>{{formatTimePtr $j.LastRun}}</td>
-        <td><button class="btn small danger" data-action data-method="DELETE" data-url="/api/schedules/{{$j.ID}}" data-success="Schedule removed" data-reload="true">Delete</button></td>
+        <td><button class="btn small danger" data-tip="Removes this recurring job." data-action data-method="DELETE" data-url="/api/schedules/{{$j.ID}}" data-success="Schedule removed" data-reload="true">Delete</button></td>
       </tr>{{end}}
     </tbody></table></div>
     {{else}}<p class="muted">No schedules. Add a daily backup above.</p>{{end}}

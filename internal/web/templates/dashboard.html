@@ -7,17 +7,17 @@
     <p>Temporal overview of every managed Vintage Story world.</p>
   </div>
   <div class="actions">
-    <a class="btn primary" href="/instances/new">✦ Make a Server</a>
-    <a class="btn" href="/versions">Version Manager</a>
+    <a class="btn primary" href="/instances/new" data-tip="Start the four-step wizard to create and provision a world">✦ Make a Server</a>
+    <a class="btn" href="/versions" data-tip="Download and cache official Vintage Story server builds">Version Manager</a>
   </div>
 </div>
 {{template "alerts" .}}
 
 <div class="grid cols-4" style="margin-bottom:1.25rem">
-  <div class="card stat"><span class="value">{{.Stats.total}}</span><span class="label">Worlds</span></div>
-  <div class="card stat"><span class="value" style="color:var(--green)">{{.Stats.running}}</span><span class="label">Online</span></div>
-  <div class="card stat"><span class="value">{{.Stats.stopped}}</span><span class="label">Stopped</span></div>
-  <div class="card stat"><span class="value" style="color:var(--accent)">{{.Stats.cached}}</span><span class="label">Cached builds</span></div>
+  <div class="card stat" data-tip="Total number of managed Vintage Story instances."><span class="value">{{.Stats.total}}</span><span class="label">Worlds</span></div>
+  <div class="card stat" data-tip="Instances whose game process is currently running."><span class="value" style="color:var(--green)">{{.Stats.running}}</span><span class="label">Online</span></div>
+  <div class="card stat" data-tip="Instances that are not currently running."><span class="value">{{.Stats.stopped}}</span><span class="label">Stopped</span></div>
+  <div class="card stat" data-tip="Server versions already downloaded into /data/binaries."><span class="value" style="color:var(--accent)">{{.Stats.cached}}</span><span class="label">Cached builds</span></div>
 </div>
 
 <div class="card">
@@ -30,7 +30,7 @@
         {{range $in := .Instances}}
         {{$tel := index $.Telemetry $in.ID}}
         <tr>
-          <td><strong><a href="/instances/{{$in.ID}}">{{$in.Name}}</a></strong><br><small class="mono">{{$in.GameMode}} · {{$in.PlayStyle}}</small></td>
+          <td><strong><a href="/instances/{{$in.ID}}" data-tip="Open the live console, mods, config and schedules for this world">{{$in.Name}}</a></strong><br><small class="mono">{{$in.GameMode}} · {{$in.PlayStyle}}</small></td>
           <td><span class="badge {{statusClass $in.Status}}"><span class="dot {{if eq $in.Status "running"}}pulse{{end}}"></span>{{$in.Status}}</span></td>
           <td class="mono">{{$in.Version}}</td>
           <td class="mono">{{$in.Port}}</td>
@@ -39,12 +39,12 @@
           <td>
             <div class="btn-row">
               {{if eq $in.Status "running"}}
-              <button class="btn small" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/stop" data-success="Server stopping" data-reload="true">Stop</button>
-              <button class="btn small" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/restart" data-success="Restarting" data-reload="true">Restart</button>
+              <button class="btn small" data-tip="Cleanly stops this server and saves the world." data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/stop" data-success="Server stopping" data-reload="true">Stop</button>
+              <button class="btn small" data-tip="Stops and immediately restarts this server." data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/restart" data-success="Restarting" data-reload="true">Restart</button>
               {{else}}
-              <button class="btn small primary" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/start" data-success="Server starting" data-reload="true">Start</button>
+              <button class="btn small primary" data-tip="Starts this world, generating it on first boot." data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/start" data-success="Server starting" data-reload="true">Start</button>
               {{end}}
-              <a class="btn small" href="/instances/{{$in.ID}}">Open</a>
+              <a class="btn small" data-tip="Opens the console, mods, config and schedules for this world." href="/instances/{{$in.ID}}">Open</a>
             </div>
           </td>
         </tr>
@@ -56,7 +56,7 @@
   <div class="empty">
     <h3>No worlds yet</h3>
     <p>Create your first server with the 1:1 world creation wizard.</p>
-    <a class="btn primary" href="/instances/new">Make a Server</a>
+    <a class="btn primary" href="/instances/new" data-tip="Open the world creation wizard">Make a Server</a>
   </div>
   {{end}}
 </div>
@@ -65,10 +65,10 @@
   <div class="card">
     <h2>Getting started</h2>
     <ol class="muted">
-      <li>Download your preferred Vintage Story build in <a href="/versions">Versions</a>.</li>
-      <li>Use <a href="/instances/new">Make a Server</a> to configure identity, world generation and survival rules.</li>
-      <li>Install server-side mods from the <a href="/mods">ModDB browser</a>.</li>
-      <li>Schedule snapshots under <a href="/backups">Temporal Rollbacks</a> and watch your world through the live console.</li>
+      <li>Download your preferred Vintage Story build in <a href="/versions" data-tip="Cache official server builds for offline use">Versions</a>.</li>
+      <li>Use <a href="/instances/new" data-tip="Configure identity, world generation and survival rules">Make a Server</a> to configure identity, world generation and survival rules.</li>
+      <li>Install server-side mods from the <a href="/mods" data-tip="Search the official Vintage Story ModDB">ModDB browser</a>.</li>
+      <li>Schedule snapshots under <a href="/backups" data-tip="Browse and restore compressed world snapshots">Temporal Rollbacks</a> and watch your world through the live console.</li>
     </ol>
   </div>
   <div class="card">

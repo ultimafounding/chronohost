@@ -12,10 +12,10 @@
 
 <div x-data="wizard()" x-init="init()" class="wizard-root">
   <div class="wizard-steps">
-    <button type="button" :class="{'active': step===1}" @click="step=1"><span class="num">01</span>Identity &amp; Rules</button>
-    <button type="button" :class="{'active': step===2}" @click="step=2"><span class="num">02</span>World &amp; Geography</button>
-    <button type="button" :class="{'active': step===3}" @click="step=3"><span class="num">03</span>Survival &amp; Temporal</button>
-    <button type="button" :class="{'active': step===4}" @click="step=4; preview()"><span class="num">04</span>Review &amp; Launch</button>
+    <button type="button" data-tip="Name, description, game mode and the playstyle preset" :class="{'active': step===1}" @click="step=1"><span class="num">01</span>Identity &amp; Rules</button>
+    <button type="button" data-tip="Seed, map size, landforms, climate and ore deposits" :class="{'active': step===2}" @click="step=2"><span class="num">02</span>World &amp; Geography</button>
+    <button type="button" data-tip="Storms, survival rules, creatures and hazards" :class="{'active': step===3}" @click="step=3"><span class="num">03</span>Survival &amp; Temporal</button>
+    <button type="button" data-tip="Check the generated configuration, pick a build and create the server" :class="{'active': step===4}" @click="step=4; preview()"><span class="num">04</span>Review &amp; Launch</button>
   </div>
 
   <form @submit.prevent="create()" class="card">
@@ -59,7 +59,7 @@
       <p class="muted">Generation settings are only applied when the world is first created. Hover any ⓘ for an explanation.</p>
       <div class="field-row">
         <div class="field" data-tip="Any text or number that determines terrain. The same seed plus the same settings makes the same world; blank picks a random seed."><label>World seed</label>
-          <div style="display:flex;gap:.4rem"><input type="text" x-model="form.seed" placeholder="blank = random"><button type="button" class="btn" @click="randomSeed()">Randomize</button></div>
+          <div style="display:flex;gap:.4rem"><input type="text" x-model="form.seed" placeholder="blank = random"><button type="button" class="btn" data-tip="Replaces the seed with a new random number" @click="randomSeed()">Randomize</button></div>
         </div>
         <div class="field" data-tip="Climate where players spawn and the world's overall starting conditions."><label>Starting climate</label>
           <select x-model="form.startingClimate">
@@ -189,18 +189,18 @@
       <div class="alerts" x-show="errors.length"><template x-for="e in errors" :key="e.field"><div class="alert error"><strong x-text="e.field"></strong>: <span x-text="e.message"></span></div></template></div>
       <pre x-text="previewText || 'Loading preview…'"></pre>
       <div class="wizard-nav">
-        <button type="button" class="btn" @click="step=3">← Back</button>
+        <button type="button" class="btn" data-tip="Return to survival and temporal settings" @click="step=3">← Back</button>
         <div class="actions">
-          <button type="button" class="btn" @click="preview()">Refresh preview</button>
-          <button type="submit" class="btn primary" :disabled="busy" x-text="busy ? 'Provisioning…' : '✦ Create server'"></button>
+          <button type="button" class="btn" data-tip="Rebuild the configuration preview from the current settings" @click="preview()">Refresh preview</button>
+          <button type="submit" class="btn primary" data-tip="Provision the world, install selected mods and optionally start it" :disabled="busy" x-text="busy ? 'Provisioning…' : '✦ Create server'"></button>
         </div>
       </div>
     </section>
 
     <div class="wizard-nav" x-show="step<4">
-      <button type="button" class="btn" x-show="step>1" @click="step=step-1">← Back</button>
+      <button type="button" class="btn" x-show="step>1" data-tip="Return to the previous wizard step" @click="step=step-1">← Back</button>
       <span x-show="step===1"></span>
-      <button type="button" class="btn primary" @click="step=step+1; if(step===4) preview()">Continue →</button>
+      <button type="button" class="btn primary" data-tip="Save this step and continue to the next one" @click="step=step+1; if(step===4) preview()">Continue →</button>
     </div>
   </form>
 </div>

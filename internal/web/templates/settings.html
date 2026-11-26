@@ -3,45 +3,46 @@
 {{template "nav" .}}
 <div class="page-head">
   <div><h1>Settings</h1><p>Runtime defaults, watchdog behavior, retention and Discord alerts. Changes take effect immediately for new actions.</p></div>
-  <div class="actions"><a class="btn" href="/">← Dashboard</a></div>
+  <div class="actions"><a class="btn" href="/" data-tip="Return to the dashboard">← Dashboard</a></div>
 </div>
 {{template "alerts" .}}
 
 <div x-data="settingsForm()" class="card">
   <h2>Process &amp; ports</h2>
+  <p class="muted">Hover any ⓘ for an explanation.</p>
   <div class="field-row">
-    <div class="field"><label>Port range start</label><input type="number" x-model="form.port_range_start"></div>
-    <div class="field"><label>Port range end</label><input type="number" x-model="form.port_range_end"></div>
-    <div class="field"><label>Stop timeout</label><input type="text" x-model="form.stop_timeout" placeholder="20s"></div>
-    <div class="field"><label>Dotnet binary</label><input type="text" x-model="form.dotnet_binary" placeholder="dotnet"></div>
-    <div class="field"><label>Default version <span class="hint">(blank = latest stable)</span></label><input type="text" x-model="form.default_version"></div>
+    <div class="field" data-tip="First port ChronoHost may assign to a new world. Each instance needs one TCP and one UDP port."><label>Port range start</label><input type="number" x-model="form.port_range_start"></div>
+    <div class="field" data-tip="Last port ChronoHost may assign to a new world. Keep this in sync with your Docker port mapping."><label>Port range end</label><input type="number" x-model="form.port_range_end"></div>
+    <div class="field" data-tip="How long ChronoHost waits for a clean shutdown before force-killing the game process."><label>Stop timeout</label><input type="text" x-model="form.stop_timeout" placeholder="20s"></div>
+    <div class="field" data-tip="Command used to launch the server DLL. Usually just dotnet; change only if .NET lives somewhere unusual."><label>Dotnet binary</label><input type="text" x-model="form.dotnet_binary" placeholder="dotnet"></div>
+    <div class="field" data-tip="Version preselected in the creation wizard. Blank uses whatever the official feed reports as latest stable."><label>Default version <span class="hint">(blank = latest stable)</span></label><input type="text" x-model="form.default_version"></div>
   </div>
   <div class="field-row">
-    <div class="field field-inline"><input type="checkbox" id="watchdog" x-model="form.watchdog_enabled"><label for="watchdog">Crash watchdog</label></div>
-    <div class="field"><label>Watchdog retries</label><input type="number" x-model="form.watchdog_retries"></div>
-    <div class="field"><label>Backoff</label><input type="text" x-model="form.watchdog_backoff" placeholder="5s"></div>
-    <div class="field field-inline"><input type="checkbox" id="autoupdate" x-model="form.auto_update"><label for="autoupdate">Auto-update before start</label></div>
-    <div class="field field-inline"><input type="checkbox" id="backupupdate" x-model="form.backup_before_update"><label for="backupupdate">Backup before update</label></div>
+    <div class="field field-inline" data-tip="Automatically restarts a server that crashes or exits unexpectedly."><input type="checkbox" id="watchdog" x-model="form.watchdog_enabled"><label for="watchdog">Crash watchdog</label></div>
+    <div class="field" data-tip="Maximum number of automatic restart attempts before ChronoHost stops trying."><label>Watchdog retries</label><input type="number" x-model="form.watchdog_retries"></div>
+    <div class="field" data-tip="Wait time before a restart attempt. It increases between retries to avoid tight crash loops."><label>Backoff</label><input type="text" x-model="form.watchdog_backoff" placeholder="5s"></div>
+    <div class="field field-inline" data-tip="Downloads the newest server build before starting an instance."><input type="checkbox" id="autoupdate" x-model="form.auto_update"><label for="autoupdate">Auto-update before start</label></div>
+    <div class="field field-inline" data-tip="Creates a world snapshot before applying an update, so mods that add blocks can be rolled back."><input type="checkbox" id="backupupdate" x-model="form.backup_before_update"><label for="backupupdate">Backup before update</label></div>
   </div>
 
   <hr>
   <h2>Retention policy (GFS)</h2>
   <div class="field-row">
-    <div class="field"><label>Hourly snapshots</label><input type="number" x-model="form.backup_hourly"></div>
-    <div class="field"><label>Daily snapshots</label><input type="number" x-model="form.backup_daily"></div>
-    <div class="field"><label>Weekly snapshots</label><input type="number" x-model="form.backup_weekly"></div>
-    <div class="field"><label>Monthly snapshots</label><input type="number" x-model="form.backup_monthly"></div>
+    <div class="field" data-tip="How many of the most recent hourly snapshots are kept. Older ones are pruned automatically."><label>Hourly snapshots</label><input type="number" x-model="form.backup_hourly"></div>
+    <div class="field" data-tip="How many daily snapshots are kept after the hourly copies expire."><label>Daily snapshots</label><input type="number" x-model="form.backup_daily"></div>
+    <div class="field" data-tip="How many weekly snapshots are kept from the daily pool."><label>Weekly snapshots</label><input type="number" x-model="form.backup_weekly"></div>
+    <div class="field" data-tip="How many monthly snapshots are kept long term."><label>Monthly snapshots</label><input type="number" x-model="form.backup_monthly"></div>
   </div>
 
   <hr>
   <h2>Discord alerts</h2>
-  <div class="field field-inline"><input type="checkbox" id="discord" x-model="form.discord_enabled"><label for="discord">Send webhook alerts</label></div>
-  <div class="field"><label>Webhook URL</label><input type="url" x-model="form.discord_webhook" placeholder="https://discord.com/api/webhooks/..."></div>
+  <div class="field field-inline" data-tip="Turns Discord notifications on or off. The webhook below must be set for alerts to send."><input type="checkbox" id="discord" x-model="form.discord_enabled"><label for="discord">Send webhook alerts</label></div>
+  <div class="field" data-tip="Discord channel webhook URL. Treat it like a password; anyone with it can post to your channel."><label>Webhook URL</label><input type="url" x-model="form.discord_webhook" placeholder="https://discord.com/api/webhooks/..."></div>
   <p class="hint">Alerts are sent for start, stop, crash, joins, leaves and completed backups. Keep the webhook URL private.</p>
 
   <div class="btn-row" style="margin-top:1rem">
-    <button class="btn primary" @click="save()" :disabled="busy" x-text="busy ? 'Saving…' : 'Save settings'"></button>
-    <button class="btn" @click="location.reload()">Discard</button>
+    <button class="btn primary" data-tip="Applies these settings immediately to future actions." @click="save()" :disabled="busy" x-text="busy ? 'Saving…' : 'Save settings'"></button>
+    <button class="btn" data-tip="Reloads the page and discards unsaved edits." @click="location.reload()">Discard</button>
   </div>
 </div>
 
