@@ -9,11 +9,11 @@
       &nbsp; <span class="mono muted">{{$in.Version}} · port {{$in.Port}} · {{$in.GameMode}} · {{$in.PlayStyle}}</span></p>
   </div>
   <div class="actions" x-data="controls()">
-    <button class="btn primary" data-tip="Launches this world and generates it if no save exists yet." x-show="status!=='running'" @click="act('start')">▶ Start</button>
-    <button class="btn" data-tip="Asks the server to shut down cleanly and save the world." x-show="status==='running'" @click="act('stop')">■ Stop</button>
-    <button class="btn" data-tip="Stops and immediately starts the server again." x-show="status==='running'" @click="act('restart')">↻ Restart</button>
+    <button class="btn primary" data-tip="Launches this world and generates it if no save exists yet." x-show="status!=='running'" @click="act('start')">Start</button>
+    <button class="btn" data-tip="Asks the server to shut down cleanly and save the world." x-show="status==='running'" @click="act('stop')">Stop</button>
+    <button class="btn" data-tip="Stops and immediately starts the server again." x-show="status==='running'" @click="act('restart')">Restart</button>
     <button class="btn danger" data-tip="Force-kills the process. Unsaved changes may be lost." x-show="status!=='stopped'" @click="CH.confirm('Force kill the server? Unsaved changes may be lost.', () => act('kill'))">Kill</button>
-    <a class="btn" data-tip="Opens snapshots and one-click restore for this world." href="/backups?instance={{$in.ID}}">↺ Backups</a>
+    <a class="btn" data-tip="Opens snapshots and one-click restore for this world." href="/backups?instance={{$in.ID}}">Backups</a>
   </div>
 </div>
 {{template "alerts" .}}
@@ -47,7 +47,7 @@
   </section>
 
   <section x-show="tab==='mods'" class="card">
-    <h2>Installed mods <a class="btn small" href="/mods?instance={{$in.ID}}" data-tip="Search ModDB and install mods into this world">Browse ModDB →</a></h2>
+    <h2>Installed mods <a class="btn small" href="/mods?instance={{$in.ID}}" data-tip="Search ModDB and install mods into this world">Browse ModDB</a></h2>
     {{if .Mods}}
     <div class="table-wrap"><table>
       <thead><tr><th>Mod</th><th>Version</th><th>Game versions</th><th>File</th><th>Status</th><th></th></tr></thead>
@@ -69,7 +69,7 @@
     <h2>Temporal rollbacks</h2>
     <div class="btn-row" style="margin-bottom:.8rem">
       <button class="btn primary small" data-tip="Captures the current save, config and mods as a tar.gz snapshot." data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/backups" data-body='{"kind":"manual"}' data-success="Snapshot created" data-reload="true">Create snapshot</button>
-      <a class="btn small" data-tip="Opens the full rollback manager with restore and delete." href="/backups?instance={{$in.ID}}">Open rollback manager →</a>
+      <a class="btn small" data-tip="Opens the full rollback manager with restore and delete." href="/backups?instance={{$in.ID}}">Open rollback manager</a>
     </div>
     {{if .Backups}}
     <div class="table-wrap"><table><thead><tr><th>Snapshot</th><th>Kind</th><th>Size</th><th>Created</th></tr></thead><tbody>

@@ -18,16 +18,16 @@
   <aside class="sidebar">
     <a href="/" class="brand">
       <span class="brand-mark">CH</span>
-      <span>ChronoHost<small>Temporal Server Control</small></span>
+      <span>ChronoHost<small>Field Station / Vintage Story</small></span>
     </a>
     <nav class="nav">
-      <a href="/" data-tip="Overview of all worlds and quick controls" class="{{if eq .Path "/"}}active{{end}}"><span class="ico">⌂</span> Dashboard</a>
-      <a href="/instances/new" data-tip="Four-step world creation wizard" class="{{if hasPrefix .Path "/instances/new"}}active{{end}}"><span class="ico">✦</span> Make a Server</a>
-      <a href="/versions" data-tip="Download and cache official server builds" class="{{if eq .Path "/versions"}}active{{end}}"><span class="ico">◷</span> Versions</a>
-      <a href="/mods" data-tip="Search ModDB and install server-side mods" class="{{if eq .Path "/mods"}}active{{end}}"><span class="ico">▦</span> Mods</a>
-      <a href="/backups" data-tip="Browse snapshots and restore worlds" class="{{if eq .Path "/backups"}}active{{end}}"><span class="ico">↺</span> Rollbacks</a>
-      <a href="/settings" data-tip="Ports, watchdog, retention and Discord alerts" class="{{if eq .Path "/settings"}}active{{end}}"><span class="ico">⚙</span> Settings</a>
-      {{if eq .User.Role "admin"}}<a href="/users" data-tip="Manage accounts and review the audit log" class="{{if eq .Path "/users"}}active{{end}}"><span class="ico">♙</span> Users</a>{{end}}
+      <a href="/" data-tip="Overview of all worlds and quick controls" class="{{if eq .Path "/"}}active{{end}}">Dashboard</a>
+      <a href="/instances/new" data-tip="Four-step world creation wizard" class="{{if hasPrefix .Path "/instances/new"}}active{{end}}">Make a Server</a>
+      <a href="/versions" data-tip="Download and cache official server builds" class="{{if eq .Path "/versions"}}active{{end}}">Versions</a>
+      <a href="/mods" data-tip="Search ModDB and install server-side mods" class="{{if eq .Path "/mods"}}active{{end}}">Mods</a>
+      <a href="/backups" data-tip="Browse snapshots and restore worlds" class="{{if eq .Path "/backups"}}active{{end}}">Rollbacks</a>
+      <a href="/settings" data-tip="Ports, watchdog, retention and Discord alerts" class="{{if eq .Path "/settings"}}active{{end}}">Settings</a>
+      {{if eq .User.Role "admin"}}<a href="/users" data-tip="Manage accounts and review the audit log" class="{{if eq .Path "/users"}}active{{end}}">Users</a>{{end}}
     </nav>
     <div class="sidebar-footer">
       <div class="user-chip">
@@ -45,7 +45,7 @@
 {{end}}
 
 {{define "foot"}}
-    <div class="footer-note">ChronoHost · keeping your world temporally stable</div>
+    <div class="footer-note">ChronoHost · field notes from the temporal frontier</div>
   </main>
 </div>
 </body>

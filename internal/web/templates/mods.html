@@ -3,7 +3,7 @@
 {{template "nav" .}}
 <div class="page-head">
   <div><h1>Mod Manager</h1><p>Search the official Vintage Story ModDB and install server-side mods with compatibility checks.</p></div>
-  <div class="actions"><a class="btn" href="/" data-tip="Return to the dashboard">← Dashboard</a></div>
+  <div class="actions"><a class="btn" href="/" data-tip="Return to the dashboard">Dashboard</a></div>
 </div>
 {{template "alerts" .}}
 
@@ -37,7 +37,7 @@
       <p class="hint">by {{$m.Author}} · {{$m.Side}} · {{$m.Downloads}} downloads</p>
       <div class="btn-row">
         <button class="btn small primary" data-tip="Installs the release marked compatible with the target instance version." data-action data-url="/api/instances/{{$.Instance.ID}}/mods/install" data-body='{"modId":{{$m.ModID}},"releaseId":0}' data-success="Installing {{$m.Name}}" data-reload="true">Install compatible release</button>
-        <a class="btn small" data-tip="Opens the mod's page on ModDB in a new tab." href="https://mods.vintagestory.at/{{$m.URLAlias}}" target="_blank" rel="noopener">ModDB ↗</a>
+        <a class="btn small" data-tip="Opens the mod's page on ModDB in a new tab." href="https://mods.vintagestory.at/{{$m.URLAlias}}" target="_blank" rel="noopener">ModDB</a>
       </div>
     </div>
     {{end}}

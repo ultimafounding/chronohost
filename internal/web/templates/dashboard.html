@@ -3,11 +3,11 @@
 {{template "nav" .}}
 <div class="page-head">
   <div>
-    <h1>Dashboard</h1>
-    <p>Temporal overview of every managed Vintage Story world.</p>
+    <h1>Station Overview</h1>
+    <p>Field log for every managed Vintage Story world.</p>
   </div>
   <div class="actions">
-    <a class="btn primary" href="/instances/new" data-tip="Start the four-step wizard to create and provision a world">✦ Make a Server</a>
+    <a class="btn primary" href="/instances/new" data-tip="Start the four-step wizard to create and provision a world">Make a Server</a>
     <a class="btn" href="/versions" data-tip="Download and cache official Vintage Story server builds">Version Manager</a>
   </div>
 </div>
@@ -21,7 +21,7 @@
 </div>
 
 <div class="card">
-  <h2>Your instances</h2>
+  <h2>World register</h2>
   {{if .Instances}}
   <div class="table-wrap">
     <table>
@@ -63,7 +63,7 @@
 
 <div class="grid cols-2">
   <div class="card">
-    <h2>Getting started</h2>
+    <h2>Field procedure</h2>
     <ol class="muted">
       <li>Download your preferred Vintage Story build in <a href="/versions" data-tip="Cache official server builds for offline use">Versions</a>.</li>
       <li>Use <a href="/instances/new" data-tip="Configure identity, world generation and survival rules">Make a Server</a> to configure identity, world generation and survival rules.</li>
@@ -72,7 +72,7 @@
     </ol>
   </div>
   <div class="card">
-    <h2>Temporal stability checklist</h2>
+    <h2>Stability checklist</h2>
     <ul class="muted">
       <li>Both TCP and UDP must be forwarded on the instance port (from 1.20 onward).</li>
       <li>Clients must run the same game version as the server.</li>

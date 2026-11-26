@@ -23,7 +23,6 @@ window.CH = {
     }
     const el = document.createElement('div');
     el.className = 'alert ' + kind;
-    el.style.boxShadow = '0 8px 24px rgba(0,0,0,.4)';
     el.textContent = message;
     host.appendChild(el);
     setTimeout(() => el.remove(), 5000);

@@ -2,9 +2,9 @@
 {{template "head" .}}
 <div class="login-wrap">
   <div class="card login-card">
-    <div class="brand"><span class="brand-mark">CH</span><span>ChronoHost<small>Temporal Server Control</small></span></div>
-    <h1>Welcome back</h1>
-    <p class="muted">Sign in to manage your Vintage Story worlds.</p>
+    <div class="brand"><span class="brand-mark">CH</span><span>ChronoHost<small>Field Station / Vintage Story</small></span></div>
+    <h1>Sign in to the station</h1>
+    <p class="muted">Open the logbook and check on your worlds.</p>
     {{template "alerts" .}}
     <form method="post" action="/login">
       <input type="hidden" name="next" value="{{.Next}}">

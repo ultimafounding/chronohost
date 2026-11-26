@@ -6,7 +6,7 @@
     <h1>Make a Server</h1>
     <p>Mirror the in-game <em>Customize World</em> screen and generate a valid <code>serverconfig.json</code> before first boot.</p>
   </div>
-  <div class="actions"><a class="btn" href="/">← Dashboard</a></div>
+  <div class="actions"><a class="btn" href="/">Dashboard</a></div>
 </div>
 {{template "alerts" .}}
 
@@ -189,18 +189,18 @@
       <div class="alerts" x-show="errors.length"><template x-for="e in errors" :key="e.field"><div class="alert error"><strong x-text="e.field"></strong>: <span x-text="e.message"></span></div></template></div>
       <pre x-text="previewText || 'Loading preview…'"></pre>
       <div class="wizard-nav">
-        <button type="button" class="btn" data-tip="Return to survival and temporal settings" @click="step=3">← Back</button>
+        <button type="button" class="btn" data-tip="Return to survival and temporal settings" @click="step=3">Back</button>
         <div class="actions">
           <button type="button" class="btn" data-tip="Rebuild the configuration preview from the current settings" @click="preview()">Refresh preview</button>
-          <button type="submit" class="btn primary" data-tip="Provision the world, install selected mods and optionally start it" :disabled="busy" x-text="busy ? 'Provisioning…' : '✦ Create server'"></button>
+          <button type="submit" class="btn primary" data-tip="Provision the world, install selected mods and optionally start it" :disabled="busy" x-text="busy ? 'Provisioning…' : 'Create server'"></button>
         </div>
       </div>
     </section>
 
     <div class="wizard-nav" x-show="step<4">
-      <button type="button" class="btn" x-show="step>1" data-tip="Return to the previous wizard step" @click="step=step-1">← Back</button>
+      <button type="button" class="btn" x-show="step>1" data-tip="Return to the previous wizard step" @click="step=step-1">Back</button>
       <span x-show="step===1"></span>
-      <button type="button" class="btn primary" data-tip="Save this step and continue to the next one" @click="step=step+1; if(step===4) preview()">Continue →</button>
+      <button type="button" class="btn primary" data-tip="Save this step and continue to the next one" @click="step=step+1; if(step===4) preview()">Continue</button>
     </div>
   </form>
 </div>

@@ -3,7 +3,7 @@
 {{template "nav" .}}
 <div class="page-head">
   <div><h1>Temporal Rollbacks</h1><p>Compressed world snapshots with grandfather–father–son retention, and one-click restore.</p></div>
-  <div class="actions"><a class="btn" href="/" data-tip="Return to the dashboard">← Dashboard</a></div>
+  <div class="actions"><a class="btn" href="/" data-tip="Return to the dashboard">Dashboard</a></div>
 </div>
 {{template "alerts" .}}
 
@@ -35,7 +35,7 @@
   <h2>Snapshots for {{.Instance.Name}}</h2>
   <div class="btn-row" style="margin-bottom:.8rem">
     <button class="btn primary" data-tip="Captures saves, config and mods right now. A .vcdbs save must exist first." data-action data-url="/api/instances/{{.Instance.ID}}/backups" data-body='{"kind":"manual"}' data-success="Snapshot created" data-reload="true">Create manual snapshot</button>
-    <a class="btn" href="/instances/{{.Instance.ID}}" data-tip="Open this world's console and management tabs">Open live console →</a>
+    <a class="btn" href="/instances/{{.Instance.ID}}" data-tip="Open this world's console and management tabs">Open live console</a>
   </div>
   {{if .Backups}}
   <div class="table-wrap"><table>
