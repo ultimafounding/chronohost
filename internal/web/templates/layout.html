@@ -1,0 +1,53 @@
+{{define "head"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}} · ChronoHost</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/alpine.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+{{end}}
+
+{{define "nav"}}
+<div class="shell">
+  <aside class="sidebar">
+    <a href="/" class="brand">
+      <span class="brand-mark">CH</span>
+      <span>ChronoHost<small>Temporal Server Control</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/" class="{{if eq .Path "/"}}active{{end}}"><span class="ico">⌂</span> Dashboard</a>
+      <a href="/instances/new" class="{{if hasPrefix .Path "/instances/new"}}active{{end}}"><span class="ico">✦</span> Make a Server</a>
+      <a href="/versions" class="{{if eq .Path "/versions"}}active{{end}}"><span class="ico">◷</span> Versions</a>
+      <a href="/mods" class="{{if eq .Path "/mods"}}active{{end}}"><span class="ico">▦</span> Mods</a>
+      <a href="/backups" class="{{if eq .Path "/backups"}}active{{end}}"><span class="ico">↺</span> Rollbacks</a>
+      <a href="/settings" class="{{if eq .Path "/settings"}}active{{end}}"><span class="ico">⚙</span> Settings</a>
+      {{if eq .User.Role "admin"}}<a href="/users" class="{{if eq .Path "/users"}}active{{end}}"><span class="ico">♙</span> Users</a>{{end}}
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <span class="avatar">{{initial .User.Username}}</span>
+        <div><strong>{{.User.Username}}</strong><br><small>{{.User.Role}}</small></div>
+      </div>
+      <form method="post" action="/logout"><button class="logout btn ghost small" type="submit">Sign out</button></form>
+    </div>
+  </aside>
+  <main>
+{{end}}
+
+{{define "alerts"}}
+{{if .Error}}<div class="alerts"><div class="alert error">{{.Error}}</div></div>{{end}}
+{{end}}
+
+{{define "foot"}}
+    <div class="footer-note">ChronoHost · keeping your world temporally stable</div>
+  </main>
+</div>
+</body>
+</html>
+{{end}}

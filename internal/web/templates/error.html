@@ -1,0 +1,10 @@
+{{define "error.html"}}
+{{template "head" .}}
+{{template "nav" .}}
+<div class="card">
+  <h1>{{.Title}}</h1>
+  <div class="alert error">{{.Error}}</div>
+  <a class="btn" href="/">← Back to dashboard</a>
+</div>
+{{template "foot" .}}
+{{end}}

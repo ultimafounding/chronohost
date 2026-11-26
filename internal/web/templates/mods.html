@@ -1,0 +1,70 @@
+{{define "mods.html"}}
+{{template "head" .}}
+{{template "nav" .}}
+<div class="page-head">
+  <div><h1>Mod Manager</h1><p>Search the official Vintage Story ModDB and install server-side mods with compatibility checks.</p></div>
+  <div class="actions"><a class="btn" href="/">← Dashboard</a></div>
+</div>
+{{template "alerts" .}}
+
+<div class="card">
+  <form method="get" action="/mods" class="field-row">
+    <div class="field"><label>Target instance</label>
+      <select name="instance">
+        {{range $in := .Instances}}<option value="{{$in.ID}}" {{if $.Instance}}{{if eq $.Instance.ID $in.ID}}selected{{end}}{{end}}>{{$in.Name}} ({{$in.Version}})</option>{{end}}
+      </select>
+    </div>
+    <div class="field"><label>Search ModDB</label><input type="search" name="q" value="{{.Query}}" placeholder="e.g. temporal, storage, map"></div>
+    <div class="field"><label>Game version filter</label><input type="text" name="gv" value="{{.GameVersion}}"></div>
+    <div class="field" style="display:flex;align-items:end"><button class="btn primary" type="submit">Search</button></div>
+  </form>
+</div>
+
+{{if not .Instances}}
+  <div class="empty"><h3>No instances yet</h3><p>Create a server first, then install mods into it.</p><a class="btn primary" href="/instances/new">Make a Server</a></div>
+{{else}}
+{{if .Error}}<div class="alert error">{{.Error}}</div>{{end}}
+
+{{if .Query}}
+<div class="card">
+  <h2>Results for “{{.Query}}”</h2>
+  {{if .Search}}
+  <div class="grid cols-3">
+    {{range $m := .Search}}
+    <div class="card tight">
+      <strong>{{$m.Name}}</strong>
+      <p class="hint">{{$m.Summary}}</p>
+      <p class="hint">by {{$m.Author}} · {{$m.Side}} · {{$m.Downloads}} downloads</p>
+      <div class="btn-row">
+        <button class="btn small primary" data-action data-url="/api/instances/{{$.Instance.ID}}/mods/install" data-body='{"modId":{{$m.ModID}},"releaseId":0}' data-success="Installing {{$m.Name}}" data-reload="true">Install compatible release</button>
+        <a class="btn small" href="https://mods.vintagestory.at/{{$m.URLAlias}}" target="_blank" rel="noopener">ModDB ↗</a>
+      </div>
+    </div>
+    {{end}}
+  </div>
+  {{else}}<p class="muted">No mods matched. Try a shorter search term.</p>{{end}}
+</div>
+{{end}}
+
+<div class="card">
+  <h2>Installed in {{.Instance.Name}} <small class="muted">{{len .Mods}} mods</small></h2>
+  {{if .Mods}}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Mod</th><th>Version</th><th>Targets</th><th>Dependencies</th><th>Release</th><th></th></tr></thead>
+    <tbody>{{range $m := .Mods}}
+      <tr>
+        <td><strong>{{$m.Name}}</strong><br><small class="muted">ID {{$m.ModID}} · {{$m.Filename}}</small></td>
+        <td class="mono">{{$m.Version}}</td>
+        <td class="mono">{{join $m.GameVersions ", "}}</td>
+        <td class="mono">{{join $m.Dependencies ", "}}</td>
+        <td>{{if $m.Pinned}}<span class="badge ok">pinned</span>{{else}}<button class="btn small" data-action data-url="/api/instances/{{$.Instance.ID}}/mods/{{$m.ID}}/pin" data-body='{"pinned":true}' data-success="Version pinned" data-reload="true">Pin</button>{{end}}</td>
+        <td><button class="btn small danger" data-action data-method="DELETE" data-url="/api/instances/{{$.Instance.ID}}/mods/{{$m.ID}}" data-confirm="Disable and remove {{$m.Name}}?" data-success="Mod disabled" data-reload="true">Remove</button></td>
+      </tr>
+    {{end}}</tbody>
+  </table></div>
+  {{else}}<p class="muted">No mods installed in this instance. Search above to add one.</p>{{end}}
+</div>
+<p class="hint">Dependencies shown here come from each archive's <code>modinfo.json</code>. Verify that every required mod is installed. Servers must be restarted for mod changes to take effect.</p>
+{{end}}
+{{template "foot" .}}
+{{end}}

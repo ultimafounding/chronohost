@@ -1,0 +1,256 @@
+{{define "wizard.html"}}
+{{template "head" .}}
+{{template "nav" .}}
+<div class="page-head">
+  <div>
+    <h1>Make a Server</h1>
+    <p>Mirror the in-game <em>Customize World</em> screen and generate a valid <code>serverconfig.json</code> before first boot.</p>
+  </div>
+  <div class="actions"><a class="btn" href="/">← Dashboard</a></div>
+</div>
+{{template "alerts" .}}
+
+<div x-data="wizard()" x-init="init()" class="wizard-root">
+  <div class="wizard-steps">
+    <button type="button" :class="{'active': step===1}" @click="step=1"><span class="num">01</span>Identity &amp; Rules</button>
+    <button type="button" :class="{'active': step===2}" @click="step=2"><span class="num">02</span>World &amp; Geography</button>
+    <button type="button" :class="{'active': step===3}" @click="step=3"><span class="num">03</span>Survival &amp; Temporal</button>
+    <button type="button" :class="{'active': step===4}" @click="step=4; preview()"><span class="num">04</span>Review &amp; Launch</button>
+  </div>
+
+  <form @submit.prevent="create()" class="card">
+    <!-- STEP 1 -->
+    <section class="wizard-step" :class="{'active': step===1}">
+      <h2>Server identity &amp; core rules</h2>
+      <p class="muted">What players see in the server list, and the basic rules they join into.</p>
+      <div class="field-row">
+        <div class="field"><label>Server name</label><input type="text" x-model="form.serverName" maxlength="60" required></div>
+        <div class="field"><label>Port <span class="hint">({{.PortStart}}–{{.PortEnd}})</span></label><input type="number" x-model.number="form.port" :min="{{.PortStart}}" :max="{{.PortEnd}}" required></div>
+      </div>
+      <div class="field"><label>Description</label><textarea rows="2" x-model="form.serverDescription" maxlength="512"></textarea></div>
+      <div class="field"><label>Welcome message <span class="hint">({0} = player name)</span></label><input type="text" x-model="form.welcomeMessage" maxlength="512"></div>
+      <div class="field-row">
+        <div class="field"><label>Join password <span class="hint">(blank = none)</span></label><input type="text" x-model="form.password"></div>
+        <div class="field"><label>Max clients</label><input type="number" x-model.number="form.maxClients" min="1" max="200"></div>
+        <div class="field"><label>Game mode</label>
+          <select x-model="form.gameMode">
+            <option value="survival">Survival</option><option value="creative">Creative</option><option value="spectator">Spectator</option>
+          </select>
+        </div>
+      </div>
+      <div class="field field-inline"><input type="checkbox" id="advertise" x-model="form.advertise"><label for="advertise">Advertise in the public server list</label></div>
+
+      <fieldset>
+        <legend>Playstyle preset</legend>
+        <p class="hint">Quick-fills the world, survival and temporal settings below — matching the game client presets.</p>
+        <div class="preset-grid">
+          {{range $p := .Presets}}
+          <button type="button" class="preset-card" :class="{'active': form.preset==='{{$p.ID}}'}" @click="applyPreset('{{$p.ID}}')">
+            <strong>{{$p.Name}}</strong><small>{{$p.Description}}</small>
+          </button>
+          {{end}}
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- STEP 2 -->
+    <section class="wizard-step" :class="{'active': step===2}">
+      <h2>World generation &amp; geography</h2>
+      <p class="muted">Generation settings are only applied when the world is first created.</p>
+      <div class="field-row">
+        <div class="field"><label>World seed</label>
+          <div style="display:flex;gap:.4rem"><input type="text" x-model="form.seed" placeholder="blank = random"><button type="button" class="btn" @click="randomSeed()">Randomize</button></div>
+        </div>
+        <div class="field"><label>Starting climate</label>
+          <select x-model="form.startingClimate">
+            <option value="temperate">Temperate</option><option value="warm">Warm</option><option value="hot">Hot</option>
+            <option value="scorching">Scorching</option><option value="cold">Cold</option><option value="icy">Icy</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Map size X</label><input type="number" x-model.number="form.mapSizeX" min="1024" max="10000000"></div>
+        <div class="field"><label>Map size Z</label><input type="number" x-model.number="form.mapSizeZ" min="1024" max="10000000"></div>
+        <div class="field"><label>World height</label>
+          <select x-model.number="form.worldHeight"><option value="256">256</option><option value="320">320</option><option value="384">384</option><option value="512">512</option></select>
+        </div>
+      </div>
+      <fieldset>
+        <legend>Landforms &amp; oceans</legend>
+        <div class="field-row">
+          <div class="field"><label>Landcover <span x-text="pct(form.landcover)"></span></label><div class="range-row"><input type="range" min="0" max="1" step="0.01" x-model.number="form.landcover"><output x-text="pct(form.landcover)"></output></div></div>
+          <div class="field"><label>Landcover scale <span x-text="pct(form.landcoverScale)"></span></label><div class="range-row"><input type="range" min="0.1" max="10" step="0.1" x-model.number="form.landcoverScale"><output x-text="pct(form.landcoverScale)"></output></div></div>
+          <div class="field"><label>Upheaval rate <span x-text="pct(form.upheavalRate)"></span></label><div class="range-row"><input type="range" min="0" max="1" step="0.01" x-model.number="form.upheavalRate"><output x-text="pct(form.upheavalRate)"></output></div></div>
+          <div class="field"><label>Landform scale <span x-text="pct(form.landformScale)"></span></label><div class="range-row"><input type="range" min="0.2" max="2" step="0.05" x-model.number="form.landformScale"><output x-text="pct(form.landformScale)"></output></div></div>
+        </div>
+        <div class="field"><label>Geologic activity</label>
+          <select x-model="form.geologicActivity">
+            <option value="none">None</option><option value="rare">Rare</option><option value="uncommon">Uncommon</option><option value="common">Common</option>
+          </select>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Climate &amp; environment</legend>
+        <div class="field-row">
+          <div class="field"><label>Global temperature</label>
+            <select x-model.number="form.globalTemperature">
+              <option value="5">Scorching (5x)</option><option value="2.5">Hot (2.5x)</option><option value="1">Temperate (1x)</option>
+              <option value="0.5">Cold (0.5x)</option><option value="0.1">Freezing (0.1x)</option>
+            </select>
+          </div>
+          <div class="field"><label>Global precipitation</label>
+            <select x-model.number="form.globalPrecipitation">
+              <option value="0.1">Hyperarid (0.1x)</option><option value="0.5">Arid (0.5x)</option><option value="1">Normal (1x)</option>
+              <option value="2.5">Humid (2.5x)</option><option value="5">Superhumid (5x)</option>
+            </select>
+          </div>
+          <div class="field"><label>Polar–equator distance</label><input type="number" x-model.number="form.polarEquatorDistance" min="5000" max="400000"></div>
+        </div>
+        <div class="field"><label>Forestation &amp; shrubbery <span x-text="signedPct(form.forestation)"></span></label><div class="range-row"><input type="range" min="-1" max="1" step="0.05" x-model.number="form.forestation"><output x-text="signedPct(form.forestation)"></output></div></div>
+        <div class="field-row">
+          <div class="field"><label>Surface copper deposits</label>
+            <select x-model="form.copperDeposits"><option value="never">Never</option><option value="veryrare">Very rare</option><option value="rare">Rare</option><option value="common">Common</option><option value="verycommon">Very common</option></select>
+          </div>
+          <div class="field"><label>Surface tin deposits</label>
+            <select x-model="form.tinDeposits"><option value="never">Never</option><option value="veryrare">Very rare</option><option value="rare">Rare</option><option value="common">Common</option><option value="verycommon">Very common</option></select>
+          </div>
+          <div class="field"><label>Sapling growth rate</label><input type="number" step="0.1" min="0.1" max="20" x-model.number="form.saplingGrowthRate"></div>
+          <div class="field"><label>Crop growth rate</label><input type="number" step="0.1" min="0.1" max="10" x-model.number="form.cropGrowthRate"></div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="wizard-step" :class="{'active': step===3}">
+      <h2>Survival, combat &amp; temporal mechanics</h2>
+      <fieldset>
+        <legend>Temporal stability &amp; storms</legend>
+        <div class="field-row">
+          <div class="field field-inline"><input type="checkbox" id="stability" x-model="form.temporalStability"><label for="stability">Temporal stability enabled</label></div>
+          <div class="field"><label>Temporal storms</label>
+            <select x-model="form.temporalStorms"><option value="off">Off</option><option value="veryrare">Very rare</option><option value="rare">Rare</option><option value="sometimes">Sometimes</option><option value="often">Often</option><option value="veryoften">Very often</option></select>
+          </div>
+          <div class="field"><label>Temporal rifts</label><select x-model="form.temporalRifts"><option value="off">Off</option><option value="invisible">Invisible</option><option value="visible">Visible</option></select></div>
+          <div class="field"><label>Temporal gear respawn uses</label><select x-model.number="form.temporalGearRespawnUses"><option value="-1">Infinite</option><option value="1">1</option><option value="5">5</option><option value="10">10</option><option value="20">20</option></select></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Player &amp; survival rules</legend>
+        <div class="field-row">
+          <div class="field"><label>Player health points</label><input type="number" min="5" max="100" x-model.number="form.playerHealthPoints"></div>
+          <div class="field"><label>Hunger speed</label><input type="number" step="0.25" min="0.25" max="4" x-model.number="form.hungerSpeed"></div>
+          <div class="field"><label>Body temperature hardiness (°C)</label><input type="number" min="-5" max="10" x-model.number="form.bodyTemperatureHardiness"></div>
+          <div class="field"><label>Death punishment</label><select x-model="form.deathPunishment"><option value="drop">Drop inventory</option><option value="keep">Keep inventory</option></select></div>
+          <div class="field"><label>Dropped items despawn (minutes)</label><input type="number" min="1" max="1440" x-model.number="form.droppedItemsTimer"></div>
+          <div class="field"><label>Microblock chiseling</label><select x-model="form.microblockChiseling"><option value="off">Off</option><option value="stonewood">Stone &amp; wood</option><option value="all">All cubic blocks</option></select></div>
+        </div>
+        <div class="field-row">
+          <div class="field field-inline"><input type="checkbox" id="underground" x-model="form.allowUndergroundFarming"><label for="underground">Allow underground farming</label></div>
+          <div class="field field-inline"><input type="checkbox" id="hud" x-model="form.allowCoordinateHUD"><label for="hud">Allow coordinate HUD</label></div>
+          <div class="field field-inline"><input type="checkbox" id="map" x-model="form.allowMap"><label for="map">Allow world map</label></div>
+          <div class="field field-inline"><input type="checkbox" id="harsh" x-model="form.harshWinters"><label for="harsh">Harsh winters</label></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Creatures &amp; hazards</legend>
+        <div class="field-row">
+          <div class="field"><label>Creature hostility</label><select x-model="form.creatureHostility"><option value="aggressive">Aggressive</option><option value="passive">Passive</option><option value="off">Never hostile</option></select></div>
+          <div class="field"><label>Creature strength</label><input type="number" step="0.25" min="0.25" max="4" x-model.number="form.creatureStrength"></div>
+          <div class="field"><label>Creature health</label><input type="number" step="0.25" min="0.25" max="4" x-model.number="form.creatureHealth"></div>
+          <div class="field"><label>Grace timer (days)</label><input type="number" min="0" max="10" x-model.number="form.graceTimer"></div>
+          <div class="field"><label>Food spoilage rate</label><input type="number" step="0.25" min="0.25" max="4" x-model.number="form.foodSpoilageRate"></div>
+          <div class="field"><label>Cave-ins &amp; soil instability</label>
+            <select x-model="form.caveIns"><option value="off">Off</option><option value="sandgravel">Sand &amp; gravel only</option><option value="sandgravelsoil">All unstable blocks</option></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field field-inline"><input type="checkbox" id="fire" x-model="form.fireSpread"><label for="fire">Fire spread</label></div>
+          <div class="field field-inline"><input type="checkbox" id="lightning" x-model="form.lightningFires"><label for="lightning">Lightning fires</label></div>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- STEP 4 -->
+    <section class="wizard-step preview" :class="{'active': step===4}">
+      <h2>Review &amp; launch</h2>
+      <div class="field-row">
+        <div class="field"><label>Server binary version</label>
+          <select x-model="version">
+            {{if .Latest}}<option value="{{.Latest}}">{{.Latest}} (latest stable)</option>{{end}}
+            {{range $v := .Cached}}<option value="{{$v}}">{{$v}} (cached)</option>{{end}}
+          </select>
+          <small class="hint">Missing builds are downloaded automatically from the official feed.</small>
+        </div>
+        <div class="field"><label>ModDB mod IDs <span class="hint">(optional, comma separated)</span></label><input type="text" x-model="modIds" placeholder="890, 648"></div>
+      </div>
+      <div class="field field-inline"><input type="checkbox" id="boot" x-model="startAfter"><label for="boot">Start the server immediately after provisioning</label></div>
+      <h3>Generated <code>serverconfig.json</code></h3>
+      <div class="alerts" x-show="errors.length"><template x-for="e in errors" :key="e.field"><div class="alert error"><strong x-text="e.field"></strong>: <span x-text="e.message"></span></div></template></div>
+      <pre x-text="previewText || 'Loading preview…'"></pre>
+      <div class="wizard-nav">
+        <button type="button" class="btn" @click="step=3">← Back</button>
+        <div class="actions">
+          <button type="button" class="btn" @click="preview()">Refresh preview</button>
+          <button type="submit" class="btn primary" :disabled="busy" x-text="busy ? 'Provisioning…' : '✦ Create server'"></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="wizard-nav" x-show="step<4">
+      <button type="button" class="btn" x-show="step>1" @click="step=step-1">← Back</button>
+      <span x-show="step===1"></span>
+      <button type="button" class="btn primary" @click="step=step+1; if(step===4) preview()">Continue →</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function wizard() {
+  return {
+    step: 1,
+    busy: false,
+    form: {{jsonJS .Form}},
+    version: {{if .Latest}}'{{.Latest}}'{{else}}''{{end}},
+    modIds: '',
+    startAfter: true,
+    previewText: '',
+    errors: [],
+    init() {
+      this.$watch('form', () => { if (this.step === 4) this.preview(); }, { deep: true });
+      this.preview();
+    },
+    pct(v) { return Math.round((Number(v) || 0) * 100) + '%'; },
+    signedPct(v) { const n = Math.round((Number(v) || 0) * 100); return (n > 0 ? '+' : '') + n + '%'; },
+    randomSeed() { this.form.seed = String(Math.floor(Math.random() * 1000000000)); },
+    async applyPreset(id) {
+      try {
+        this.form = await CH.api('POST', '/api/instances/preset', { id, form: this.form });
+        CH.toast('Applied preset: ' + id, 'success');
+      } catch (e) { CH.toast(e.message, 'error'); }
+    },
+    async preview() {
+      try {
+        const res = await CH.api('POST', '/api/instances/preview', { form: this.form });
+        this.previewText = res.preview || '';
+        this.errors = res.errors || [];
+      } catch (e) { this.previewText = 'Preview unavailable: ' + e.message; }
+    },
+    async create() {
+      await this.preview();
+      if (this.errors.length) { CH.toast('Fix the highlighted fields first', 'error'); return; }
+      this.busy = true;
+      try {
+        const mods = this.modIds.split(',').map(s => Number(s.trim())).filter(n => n > 0).map(n => ({ modId: n, releaseId: 0 }));
+        const created = await CH.api('POST', '/api/instances', { form: this.form, version: this.version, start: this.startAfter, mods });
+        CH.toast('Created ' + created.name, 'success');
+        setTimeout(() => location.href = '/instances/' + created.id, 700);
+      } catch (e) {
+        CH.toast(e.message, 'error');
+        this.busy = false;
+      }
+    }
+  };
+}
+</script>
+{{template "foot" .}}
+{{end}}

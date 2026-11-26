@@ -1,0 +1,67 @@
+{{define "settings.html"}}
+{{template "head" .}}
+{{template "nav" .}}
+<div class="page-head">
+  <div><h1>Settings</h1><p>Runtime defaults, watchdog behavior, retention and Discord alerts. Changes take effect immediately for new actions.</p></div>
+  <div class="actions"><a class="btn" href="/">← Dashboard</a></div>
+</div>
+{{template "alerts" .}}
+
+<div x-data="settingsForm()" class="card">
+  <h2>Process &amp; ports</h2>
+  <div class="field-row">
+    <div class="field"><label>Port range start</label><input type="number" x-model="form.port_range_start"></div>
+    <div class="field"><label>Port range end</label><input type="number" x-model="form.port_range_end"></div>
+    <div class="field"><label>Stop timeout</label><input type="text" x-model="form.stop_timeout" placeholder="20s"></div>
+    <div class="field"><label>Dotnet binary</label><input type="text" x-model="form.dotnet_binary" placeholder="dotnet"></div>
+    <div class="field"><label>Default version <span class="hint">(blank = latest stable)</span></label><input type="text" x-model="form.default_version"></div>
+  </div>
+  <div class="field-row">
+    <div class="field field-inline"><input type="checkbox" id="watchdog" x-model="form.watchdog_enabled"><label for="watchdog">Crash watchdog</label></div>
+    <div class="field"><label>Watchdog retries</label><input type="number" x-model="form.watchdog_retries"></div>
+    <div class="field"><label>Backoff</label><input type="text" x-model="form.watchdog_backoff" placeholder="5s"></div>
+    <div class="field field-inline"><input type="checkbox" id="autoupdate" x-model="form.auto_update"><label for="autoupdate">Auto-update before start</label></div>
+    <div class="field field-inline"><input type="checkbox" id="backupupdate" x-model="form.backup_before_update"><label for="backupupdate">Backup before update</label></div>
+  </div>
+
+  <hr>
+  <h2>Retention policy (GFS)</h2>
+  <div class="field-row">
+    <div class="field"><label>Hourly snapshots</label><input type="number" x-model="form.backup_hourly"></div>
+    <div class="field"><label>Daily snapshots</label><input type="number" x-model="form.backup_daily"></div>
+    <div class="field"><label>Weekly snapshots</label><input type="number" x-model="form.backup_weekly"></div>
+    <div class="field"><label>Monthly snapshots</label><input type="number" x-model="form.backup_monthly"></div>
+  </div>
+
+  <hr>
+  <h2>Discord alerts</h2>
+  <div class="field field-inline"><input type="checkbox" id="discord" x-model="form.discord_enabled"><label for="discord">Send webhook alerts</label></div>
+  <div class="field"><label>Webhook URL</label><input type="url" x-model="form.discord_webhook" placeholder="https://discord.com/api/webhooks/..."></div>
+  <p class="hint">Alerts are sent for start, stop, crash, joins, leaves and completed backups. Keep the webhook URL private.</p>
+
+  <div class="btn-row" style="margin-top:1rem">
+    <button class="btn primary" @click="save()" :disabled="busy" x-text="busy ? 'Saving…' : 'Save settings'"></button>
+    <button class="btn" @click="location.reload()">Discard</button>
+  </div>
+</div>
+
+<script>
+function settingsForm() {
+  return {
+    busy: false,
+    form: {{jsonJS .Settings}},
+    async save() {
+      this.busy = true;
+      const payload = {};
+      Object.keys(this.form).forEach(k => { payload[k] = String(this.form[k]); });
+      try {
+        await CH.api('PUT', '/api/settings', payload);
+        CH.toast('Settings saved', 'success');
+        setTimeout(() => location.reload(), 500);
+      } catch (e) { CH.toast(e.message, 'error'); this.busy = false; }
+    }
+  };
+}
+</script>
+{{template "foot" .}}
+{{end}}

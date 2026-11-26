@@ -1,0 +1,36 @@
+# Runtime state and local secrets
+/data/
+.env
+.env.*
+!.env.example
+
+# Go build/test artifacts
+/chronohost
+/chronohost-test
+*.test
+*.out
+/coverage.*
+*.prof
+
+# Local build output
+/bin/
+/out/
+/dist/
+
+# Databases (the real ones live under /data/db, but catch stray copies)
+*.db
+*.db-shm
+*.db-wal
+
+# Logs and temporary files
+*.log
+*.tmp
+/tmp/
+
+# Editor and OS noise
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

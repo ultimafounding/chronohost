@@ -1,0 +1,25 @@
+{{define "login.html"}}
+{{template "head" .}}
+<div class="login-wrap">
+  <div class="card login-card">
+    <div class="brand"><span class="brand-mark">CH</span><span>ChronoHost<small>Temporal Server Control</small></span></div>
+    <h1>Welcome back</h1>
+    <p class="muted">Sign in to manage your Vintage Story worlds.</p>
+    {{template "alerts" .}}
+    <form method="post" action="/login">
+      <input type="hidden" name="next" value="{{.Next}}">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn primary" type="submit" style="width:100%">Sign in</button>
+    </form>
+    <p class="hint" style="margin-top:1rem">Credentials come from <code>CHRONOHOST_ADMIN_USER</code> and <code>CHRONOHOST_ADMIN_PASSWORD</code>. Without those variables, the fallback is <code>admin</code> / <code>chronohost</code> — change it before exposing the portal.</p>
+  </div>
+</div>
+</body></html>
+{{end}}

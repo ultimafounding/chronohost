@@ -1,0 +1,47 @@
+{{define "versionTable"}}
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Version</th><th>Build</th><th>Size</th><th>Channel</th><th></th></tr></thead>
+    <tbody>
+      {{range $rel := .}}
+      <tr>
+        <td><strong class="mono">{{$rel.Version}}</strong>{{if $rel.Latest}} <span class="badge ok">latest</span>{{end}}</td>
+        <td class="mono">{{$rel.Filename}}</td>
+        <td class="mono">{{$rel.Size}}</td>
+        <td><span class="badge idle">{{$rel.Channel}}</span></td>
+        <td><button class="btn small primary" data-action data-url="/api/versions/download" data-body='{"version":"{{$rel.Version}}","channel":"{{$rel.Channel}}"}' data-success="Downloading {{$rel.Version}}" data-reload="true">Download</button></td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}
+
+{{define "versions.html"}}
+{{template "head" .}}
+{{template "nav" .}}
+<div class="page-head">
+  <div><h1>Version Manager</h1><p>Download and cache official Vintage Story server builds. Both .NET 8 and .NET 10 runtimes are bundled in the image.</p></div>
+  <div class="actions"><span class="badge ok">Latest stable: {{default .Latest "unknown"}}</span></div>
+</div>
+{{template "alerts" .}}
+
+{{if ne .Errors.stable ""}}<div class="alert error">Stable feed: {{.Errors.stable}}</div>{{end}}
+{{if ne .Errors.unstable ""}}<div class="alert info">Unstable feed: {{.Errors.unstable}}</div>{{end}}
+
+<div class="card">
+  <h2>Cached builds <small class="muted">{{len .Cached}} available locally</small></h2>
+  {{if .Cached}}
+  <div class="btn-row">
+    {{range $v := .Cached}}<span class="badge ok mono">{{$v}}</span>{{end}}
+  </div>
+  {{else}}<p class="muted">No builds downloaded yet. Pick a version below to cache it.</p>{{end}}
+</div>
+
+<div class="grid cols-2">
+  <div class="card"><h2>Stable releases</h2>{{if .Stable}}{{template "versionTable" .Stable}}{{else}}<p class="muted">Feed unavailable.</p>{{end}}</div>
+  <div class="card"><h2>Unstable / pre-releases</h2>{{if .Unstable}}{{template "versionTable" .Unstable}}{{else}}<p class="muted">No pre-releases available.</p>{{end}}</div>
+</div>
+<p class="hint">Downloads are verified against the MD5 published by the official feed and extracted into <code>/data/binaries/&lt;version&gt;</code>.</p>
+{{template "foot" .}}
+{{end}}

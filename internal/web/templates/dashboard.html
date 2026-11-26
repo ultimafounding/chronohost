@@ -1,0 +1,85 @@
+{{define "dashboard.html"}}
+{{template "head" .}}
+{{template "nav" .}}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p>Temporal overview of every managed Vintage Story world.</p>
+  </div>
+  <div class="actions">
+    <a class="btn primary" href="/instances/new">✦ Make a Server</a>
+    <a class="btn" href="/versions">Version Manager</a>
+  </div>
+</div>
+{{template "alerts" .}}
+
+<div class="grid cols-4" style="margin-bottom:1.25rem">
+  <div class="card stat"><span class="value">{{.Stats.total}}</span><span class="label">Worlds</span></div>
+  <div class="card stat"><span class="value" style="color:var(--green)">{{.Stats.running}}</span><span class="label">Online</span></div>
+  <div class="card stat"><span class="value">{{.Stats.stopped}}</span><span class="label">Stopped</span></div>
+  <div class="card stat"><span class="value" style="color:var(--accent)">{{.Stats.cached}}</span><span class="label">Cached builds</span></div>
+</div>
+
+<div class="card">
+  <h2>Your instances</h2>
+  {{if .Instances}}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Server</th><th>Status</th><th>Version</th><th>Port</th><th>Players</th><th>Game time</th><th>Actions</th></tr></thead>
+      <tbody>
+        {{range $in := .Instances}}
+        {{$tel := index $.Telemetry $in.ID}}
+        <tr>
+          <td><strong><a href="/instances/{{$in.ID}}">{{$in.Name}}</a></strong><br><small class="mono">{{$in.GameMode}} · {{$in.PlayStyle}}</small></td>
+          <td><span class="badge {{statusClass $in.Status}}"><span class="dot {{if eq $in.Status "running"}}pulse{{end}}"></span>{{$in.Status}}</span></td>
+          <td class="mono">{{$in.Version}}</td>
+          <td class="mono">{{$in.Port}}</td>
+          <td>{{if $tel.Online}}{{$tel.Online}} online{{else}}—{{end}}</td>
+          <td>{{if $tel.GameDay}}Day {{$tel.GameDay}}{{else}}—{{end}}{{if $tel.Storm}} <span class="badge warn">{{$tel.Storm}}</span>{{end}}</td>
+          <td>
+            <div class="btn-row">
+              {{if eq $in.Status "running"}}
+              <button class="btn small" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/stop" data-success="Server stopping" data-reload="true">Stop</button>
+              <button class="btn small" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/restart" data-success="Restarting" data-reload="true">Restart</button>
+              {{else}}
+              <button class="btn small primary" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/start" data-success="Server starting" data-reload="true">Start</button>
+              {{end}}
+              <a class="btn small" href="/instances/{{$in.ID}}">Open</a>
+            </div>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <div class="empty">
+    <h3>No worlds yet</h3>
+    <p>Create your first server with the 1:1 world creation wizard.</p>
+    <a class="btn primary" href="/instances/new">Make a Server</a>
+  </div>
+  {{end}}
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Getting started</h2>
+    <ol class="muted">
+      <li>Download your preferred Vintage Story build in <a href="/versions">Versions</a>.</li>
+      <li>Use <a href="/instances/new">Make a Server</a> to configure identity, world generation and survival rules.</li>
+      <li>Install server-side mods from the <a href="/mods">ModDB browser</a>.</li>
+      <li>Schedule snapshots under <a href="/backups">Temporal Rollbacks</a> and watch your world through the live console.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>Temporal stability checklist</h2>
+    <ul class="muted">
+      <li>Both TCP and UDP must be forwarded on the instance port (from 1.20 onward).</li>
+      <li>Clients must run the same game version as the server.</li>
+      <li>World configuration is applied only when the world is first generated.</li>
+      <li>Backups before updates are strongly recommended when mods add blocks.</li>
+    </ul>
+  </div>
+</div>
+{{template "foot" .}}
+{{end}}

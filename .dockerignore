@@ -1,0 +1,12 @@
+.git
+.github
+data
+tmp
+*.db
+*.db-shm
+*.db-wal
+chronohost
+coverage.out
+.env
+README.md
+design_spec.txt

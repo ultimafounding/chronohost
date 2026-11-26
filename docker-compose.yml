@@ -1,0 +1,30 @@
+services:
+  chronohost:
+    build: .
+    image: chronohost:latest
+    container_name: chronohost
+    restart: unless-stopped
+    stop_grace_period: 40s
+
+    ports:
+      # Web portal
+      - "8080:8080"
+      # Vintage Story game instances (match the portal's default port range)
+      - "42420-42430:42420-42430/tcp"
+      - "42420-42430:42420-42430/udp"
+
+    volumes:
+      # binaries/, instances/, backups/ and db/ all live under this volume.
+      - chronohost-data:/data
+
+    environment:
+      CHRONOHOST_DATA: /data
+      CHRONOHOST_ADDR: ":8080"
+      CHRONOHOST_ADMIN_USER: ${CHRONOHOST_ADMIN_USER:-admin}
+      CHRONOHOST_ADMIN_PASSWORD: ${CHRONOHOST_ADMIN_PASSWORD:-chronohost}
+      TZ: ${TZ:-UTC}
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+
+volumes:
+  chronohost-data:

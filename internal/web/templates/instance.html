@@ -1,0 +1,203 @@
+{{define "instance.html"}}
+{{template "head" .}}
+{{template "nav" .}}
+{{$in := .Instance}}
+<div class="page-head">
+  <div>
+    <h1>{{$in.Name}}</h1>
+    <p><span class="badge {{statusClass $in.Status}}" id="status-badge"><span class="dot {{if eq $in.Status "running"}}pulse{{end}}"></span><span id="status-text">{{$in.Status}}</span></span>
+      &nbsp; <span class="mono muted">{{$in.Version}} · port {{$in.Port}} · {{$in.GameMode}} · {{$in.PlayStyle}}</span></p>
+  </div>
+  <div class="actions" x-data="controls()">
+    <button class="btn primary" x-show="status!=='running'" @click="act('start')">▶ Start</button>
+    <button class="btn" x-show="status==='running'" @click="act('stop')">■ Stop</button>
+    <button class="btn" x-show="status==='running'" @click="act('restart')">↻ Restart</button>
+    <button class="btn danger" x-show="status!=='stopped'" @click="CH.confirm('Force kill the server? Unsaved changes may be lost.', () => act('kill'))">Kill</button>
+    <a class="btn" href="/backups?instance={{$in.ID}}">↺ Backups</a>
+  </div>
+</div>
+{{template "alerts" .}}
+
+<div class="grid cols-4" style="margin-bottom:1.25rem">
+  <div class="card stat"><span class="value" id="tel-online">{{.Telemetry.Online}}</span><span class="label">Players online</span></div>
+  <div class="card stat"><span class="value" id="tel-day">{{if .Telemetry.GameDay}}{{.Telemetry.GameDay}}{{else}}—{{end}}</span><span class="label">Game day</span></div>
+  <div class="card stat"><span class="value" id="tel-cpu">{{printf "%.1f" .Telemetry.CPU}}%</span><span class="label">CPU</span></div>
+  <div class="card stat"><span class="value" id="tel-mem">{{.Telemetry.MemoryMB}} MB</span><span class="label">Memory</span></div>
+</div>
+
+<div x-data="{ tab: 'console' }">
+  <div class="tabs">
+    <button :class="{'active': tab==='console'}" @click="tab='console'">Live Console</button>
+    <button :class="{'active': tab==='mods'}" @click="tab='mods'">Mods ({{len .Mods}})</button>
+    <button :class="{'active': tab==='backups'}" @click="tab='backups'">Rollbacks ({{len .Backups}})</button>
+    <button :class="{'active': tab==='config'}" @click="tab='config'">serverconfig.json</button>
+    <button :class="{'active': tab==='schedule'}" @click="tab='schedule'">Schedules ({{len .Schedules}})</button>
+  </div>
+
+  <section x-show="tab==='console'" class="card">
+    <h2>Live console <small class="muted">WebSocket stream with ANSI stripped</small></h2>
+    <div class="console" id="console">
+      {{range $line := .Logs}}<div class="line {{$line.Level}}"><time>{{$line.Time.Format "15:04:05"}}</time><span class="text">{{$line.Text}}</span></div>{{end}}
+    </div>
+    <div class="console-input">
+      <input id="console-command" placeholder="/listplayers" x-on:keydown.enter="sendCommand()">
+      <button class="btn" @click="sendCommand()">Send</button>
+    </div>
+    <p class="hint">Type a server command and press Enter. Available to operators and administrators.</p>
+  </section>
+
+  <section x-show="tab==='mods'" class="card">
+    <h2>Installed mods <a class="btn small" href="/mods?instance={{$in.ID}}">Browse ModDB →</a></h2>
+    {{if .Mods}}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Mod</th><th>Version</th><th>Game versions</th><th>File</th><th>Status</th><th></th></tr></thead>
+      <tbody>{{range $m := .Mods}}
+        <tr>
+          <td><strong>{{$m.Name}}</strong><br><small class="muted">ID {{$m.ModID}}</small></td>
+          <td class="mono">{{$m.Version}}</td>
+          <td class="mono">{{join $m.GameVersions ", "}}</td>
+          <td class="mono">{{$m.Filename}}</td>
+          <td>{{if $m.Pinned}}<span class="badge ok">pinned</span>{{else}}<span class="badge idle">auto</span>{{end}}</td>
+          <td><button class="btn small danger" data-action data-method="DELETE" data-url="/api/instances/{{$in.ID}}/mods/{{$m.ID}}" data-confirm="Disable and remove {{$m.Name}}?" data-success="Mod disabled" data-reload="true">Remove</button></td>
+        </tr>
+      {{end}}</tbody>
+    </table></div>
+    {{else}}<div class="empty">No mods installed yet. <a href="/mods?instance={{$in.ID}}">Browse ModDB</a>.</div>{{end}}
+  </section>
+
+  <section x-show="tab==='backups'" class="card">
+    <h2>Temporal rollbacks</h2>
+    <div class="btn-row" style="margin-bottom:.8rem">
+      <button class="btn primary small" data-action data-method="POST" data-url="/api/instances/{{$in.ID}}/backups" data-body='{"kind":"manual"}' data-success="Snapshot created" data-reload="true">Create snapshot</button>
+      <a class="btn small" href="/backups?instance={{$in.ID}}">Open rollback manager →</a>
+    </div>
+    {{if .Backups}}
+    <div class="table-wrap"><table><thead><tr><th>Snapshot</th><th>Kind</th><th>Size</th><th>Created</th></tr></thead><tbody>
+      {{range $b := .Backups}}<tr><td class="mono">{{$b.Name}}</td><td>{{$b.Kind}}</td><td>{{humanBytes $b.Size}}</td><td>{{formatTime $b.CreatedAt}}</td></tr>{{end}}
+    </tbody></table></div>
+    {{else}}<p class="muted">No snapshots yet.</p>{{end}}
+  </section>
+
+  <section x-show="tab==='config'" class="card">
+    <h2>serverconfig.json</h2>
+    <p class="muted">Advanced editing. Stop the server before saving changes.</p>
+    <textarea id="config-editor" rows="18" class="mono" style="font-size:12px">{{.ConfigJSON}}</textarea>
+    <div class="btn-row" style="margin-top:.7rem">
+      <button class="btn primary" @click="saveConfig()">Save configuration</button>
+      <button class="btn" @click="location.reload()">Discard</button>
+    </div>
+  </section>
+
+  <section x-show="tab==='schedule'" class="card">
+    <h2>Recurring jobs</h2>
+    <div class="field-row">
+      <div class="field"><label>Job type</label><select id="job-kind"><option value="backup">Backup</option><option value="restart">Restart</option><option value="announce">Announce</option></select></div>
+      <div class="field"><label>Cron expression <span class="hint">or @every 6h</span></label><input id="job-expr" value="0 3 * * *"></div>
+      <div class="field"><label>Announcement text</label><input id="job-message" placeholder="Temporal stability is nominal"></div>
+      <div class="field" style="display:flex;align-items:end"><button class="btn primary" @click="addJob()">Add schedule</button></div>
+    </div>
+    {{if .Schedules}}
+    <div class="table-wrap"><table><thead><tr><th>Kind</th><th>Expression</th><th>Message</th><th>Last run</th><th></th></tr></thead><tbody>
+      {{range $j := .Schedules}}<tr>
+        <td>{{$j.Kind}}</td><td class="mono">{{$j.Expr}}</td><td>{{$j.Message}}</td><td>{{formatTimePtr $j.LastRun}}</td>
+        <td><button class="btn small danger" data-action data-method="DELETE" data-url="/api/schedules/{{$j.ID}}" data-success="Schedule removed" data-reload="true">Delete</button></td>
+      </tr>{{end}}
+    </tbody></table></div>
+    {{else}}<p class="muted">No schedules. Add a daily backup above.</p>{{end}}
+  </section>
+</div>
+
+<script>
+const INSTANCE_ID = '{{$in.ID}}';
+let consoleSocket = null;
+
+function appendLine(line) {
+  const box = document.getElementById('console');
+  if (!box) return;
+  const el = document.createElement('div');
+  el.className = 'line ' + (line.level || 'info');
+  const t = document.createElement('time');
+  t.textContent = (line.time || '').slice(11, 19) || '--:--:--';
+  const s = document.createElement('span');
+  s.className = 'text';
+  s.textContent = line.text || '';
+  el.append(t, s);
+  box.appendChild(el);
+  while (box.children.length > 600) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+}
+
+function connectConsole() {
+  if (consoleSocket && consoleSocket.readyState <= 1) return;
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  consoleSocket = new WebSocket(proto + '//' + location.host + '/ws/console?instance=' + encodeURIComponent(INSTANCE_ID));
+  consoleSocket.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    if (msg.type === 'line') appendLine(msg.line);
+    if (msg.type === 'status') {
+      const text = document.getElementById('status-text');
+      if (text && msg.data.status) text.textContent = msg.data.status;
+    }
+    if (msg.type === 'error') CH.toast(msg.data, 'error');
+  };
+  consoleSocket.onclose = () => setTimeout(connectConsole, 3000);
+}
+connectConsole();
+
+function controls() {
+  return {
+    status: '{{$in.Status}}',
+    async act(action) {
+      try {
+        await CH.api('POST', '/api/instances/' + INSTANCE_ID + '/' + action);
+        CH.toast('Server ' + action + ' requested', 'success');
+        setTimeout(() => location.reload(), 800);
+      } catch (e) { CH.toast(e.message, 'error'); }
+    },
+    sendCommand() {
+      const input = document.getElementById('console-command');
+      if (!input || !input.value.trim()) return;
+      const command = input.value;
+      input.value = '';
+      if (consoleSocket && consoleSocket.readyState === 1) {
+        consoleSocket.send(JSON.stringify({ type: 'command', command }));
+      } else {
+        CH.api('POST', '/api/instances/' + INSTANCE_ID + '/command', { command })
+          .then(() => CH.toast('Command sent', 'success')).catch(e => CH.toast(e.message, 'error'));
+      }
+    },
+    async saveConfig() {
+      const text = document.getElementById('config-editor').value;
+      try {
+        const cfg = JSON.parse(text);
+        await CH.api('PUT', '/api/instances/' + INSTANCE_ID + '/config', cfg);
+        CH.toast('Configuration saved', 'success');
+      } catch (e) { CH.toast(e.message, 'error'); }
+    },
+    async addJob() {
+      try {
+        await CH.api('POST', '/api/instances/' + INSTANCE_ID + '/schedules', {
+          kind: document.getElementById('job-kind').value,
+          expr: document.getElementById('job-expr').value,
+          message: document.getElementById('job-message').value
+        });
+        CH.toast('Schedule added', 'success');
+        setTimeout(() => location.reload(), 600);
+      } catch (e) { CH.toast(e.message, 'error'); }
+    }
+  };
+}
+
+setInterval(() => {
+  CH.api('GET', '/api/instances/' + INSTANCE_ID + '/telemetry').then(res => {
+    const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    set('tel-online', res.telemetry.online || 0);
+    set('tel-day', res.telemetry.gameDay || '—');
+    set('tel-cpu', Number(res.telemetry.cpu || 0).toFixed(1) + '%');
+    set('tel-mem', (res.telemetry.memoryMb || 0) + ' MB');
+    set('status-text', res.status || 'stopped');
+  }).catch(() => {});
+}, 5000);
+</script>
+{{template "foot" .}}
+{{end}}
