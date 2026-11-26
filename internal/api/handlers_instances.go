@@ -540,6 +540,7 @@ func (a *App) apiPutConfig(w http.ResponseWriter, r *http.Request) {
 		a.fail(w, 400, err)
 		return
 	}
+	config.EnsureRoles(cfg)
 	if a.Procs.Running(in.ID) {
 		a.fail(w, 409, errBadRequest("stop the server before editing serverconfig.json"))
 		return

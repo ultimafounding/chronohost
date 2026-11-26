@@ -400,6 +400,20 @@ func ApplyPreset(f *WizardForm, id string) error {
 	return nil
 }
 
+// playStyleCodes maps ChronoHost preset IDs to the exact values the game
+// writes into WorldConfig. The "standard" preset is called "surviveandbuild"
+// in the game, with its own localization key.
+func playStyleCodes(preset string) (playStyle, langCode string) {
+	switch preset {
+	case "wildernesssurvival", "exploration", "homosapiens":
+		return preset, "preset-" + preset
+	case "creativebuilding":
+		return preset, preset
+	default:
+		return "surviveandbuild", "surviveandbuild-bands"
+	}
+}
+
 // BuildServerConfig translates a wizard form into a serverconfig.json-compatible
 // document. The playstyle preset key is derived from the selected preset.
 func BuildServerConfig(f WizardForm) (map[string]any, error) {
@@ -420,11 +434,7 @@ func BuildServerConfig(f WizardForm) (map[string]any, error) {
 		description = f.ServerDescription
 	}
 
-	playStyle := f.Preset
-	langCode := "preset-" + f.Preset
-	if f.Preset == "creativebuilding" {
-		langCode = "creativebuilding"
-	}
+	playStyle, langCode := playStyleCodes(f.Preset)
 
 	world := map[string]any{
 		"gameMode":                   f.GameMode,
@@ -512,7 +522,9 @@ func BuildServerConfig(f WizardForm) (map[string]any, error) {
 		"MapSizeZ":           f.MapSizeZ,
 		"ServerLanguage":     "en",
 		"MaxChunkRadius":     12,
-		"DefaultRoleCode":    "suplayer",
+		"DefaultRoleCode":    defaultRoleCode,
+		"Roles":              DefaultRoles(),
+		"NextPlayerGroupUid": 10,
 		"WhitelistMode":      0,
 		"AllowPvP":           true,
 		"AllowFireSpread":    f.FireSpread,

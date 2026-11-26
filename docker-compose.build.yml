@@ -1,0 +1,4 @@
+services:
+  chronohost:
+    build: .
+    image: chronohost:local

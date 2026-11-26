@@ -1,7 +1,8 @@
 services:
   chronohost:
-    build: .
-    image: chronohost:latest
+    # Published image from GitHub Releases. To build from source instead, add
+    # -f docker-compose.build.yml to the compose command.
+    image: ghcr.io/ultimafounding/chronohost:latest
     container_name: chronohost
     restart: unless-stopped
     stop_grace_period: 40s

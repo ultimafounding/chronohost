@@ -78,6 +78,38 @@ func hasLine(lines []Line, want string) bool {
 	return false
 }
 
+func TestSpawnUsesDataPathAsWorkingDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("shell launcher test requires a POSIX shell")
+	}
+	data := t.TempDir()
+	writeScript(t, "") // keeps script creation consistent with the other tests
+	m := New(nil)
+	defer m.Shutdown()
+	spec := Spec{
+		ID:        "cwd",
+		DataPath:  data,
+		DLL:       "-c",
+		Dotnet:    "/bin/sh",
+		ExtraArgs: []string{"pwd > cwd.txt"},
+	}
+	if err := m.Start(spec); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	path := filepath.Join(data, "cwd.txt")
+	waitUntil(t, 2*time.Second, func() bool {
+		_, err := os.Stat(path)
+		return err == nil
+	}, "working directory marker")
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.TrimSpace(string(b)); got != data {
+		t.Fatalf("working directory = %q, want %q", got, data)
+	}
+}
+
 func TestRingBufferAndANSIStripping(t *testing.T) {
 	m := New(nil)
 	i := m.ensure("ring")

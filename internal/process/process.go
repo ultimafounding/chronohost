@@ -340,6 +340,12 @@ func (i *instance) spawn(spec Spec) error {
 	}
 
 	cmd := exec.Command(dotnet, args...)
+	// Vintage Story resolves relative paths in serverconfig.json (notably
+	// Saves/default.vcdbs) from its working directory. Run inside the instance
+	// data path so saves, configs and mods stay with their world.
+	if spec.DataPath != "" {
+		cmd.Dir = spec.DataPath
+	}
 	// Give stdout and stderr the same OS pipe. Assigning an *os.File avoids
 	// cmd.Wait waiting on copy goroutines, which could otherwise hang if a
 	// grandchild inherits the write end.

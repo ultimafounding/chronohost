@@ -113,6 +113,7 @@ func New(root string, logger *log.Logger) (*App, error) {
 		st.Close()
 		return nil, err
 	}
+	a.repairConfigs(context.Background())
 	go func() {
 		ticker := time.NewTicker(6 * time.Hour)
 		defer ticker.Stop()
@@ -146,6 +147,34 @@ func (a *App) bootstrapAdmin() error {
 	}
 	a.Log.Printf("Created administrator account %q", user)
 	return nil
+}
+
+// repairConfigs upgrades configs written before the stock player roles were
+// included. Without a role matching DefaultRoleCode, Vintage Story 1.22 exits
+// during configuration instead of starting the world.
+func (a *App) repairConfigs(ctx context.Context) {
+	instances, err := a.Store.ListInstances(ctx)
+	if err != nil {
+		a.Log.Printf("load instances for config repair: %v", err)
+		return
+	}
+	for _, in := range instances {
+		cfg := instanceConfig(in)
+		if raw, err := os.ReadFile(filepath.Join(in.DataPath, "serverconfig.json")); err == nil {
+			var disk map[string]any
+			if json.Unmarshal(raw, &disk) == nil && disk != nil {
+				cfg = disk
+			}
+		}
+		if !config.EnsureRoles(cfg) {
+			continue
+		}
+		if err := a.writeConfig(ctx, in, cfg); err != nil {
+			a.Log.Printf("repair config for %s: %v", in.Name, err)
+			continue
+		}
+		a.Log.Printf("added missing default role to %s config", in.Name)
+	}
 }
 
 func envOr(key, fallback string) string {
