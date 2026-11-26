@@ -3,6 +3,7 @@ package moddb
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -22,6 +24,83 @@ type Dependency struct {
 	ModID   string `json:"modid"`
 	Version string `json:"version"`
 	Enabled bool   `json:"enabled"`
+}
+
+// DependencyList accepts both dependency encodings found in the wild:
+// the legacy array of objects and the current modinfo.json map of
+// mod id to version string. Map entries are sorted so callers see a
+// stable order.
+type DependencyList []Dependency
+
+func (d *DependencyList) UnmarshalJSON(data []byte) error {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		*d = nil
+		return nil
+	}
+
+	var list []Dependency
+	if err := json.Unmarshal(trimmed, &list); err == nil {
+		*d = list
+		return nil
+	}
+
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(trimmed, &object); err != nil {
+		return fmt.Errorf("dependencies must be an array or object: %w", err)
+	}
+	keys := make([]string, 0, len(object))
+	for key := range object {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	result := make(DependencyList, 0, len(keys))
+	for _, key := range keys {
+		dep := Dependency{ModID: key, Enabled: true}
+		value := bytes.TrimSpace(object[key])
+		switch {
+		case len(value) == 0 || bytes.Equal(value, []byte("null")):
+		case value[0] == '"':
+			if err := json.Unmarshal(value, &dep.Version); err != nil {
+				return fmt.Errorf("dependency %s version: %w", key, err)
+			}
+		case value[0] == '{':
+			var details struct {
+				Version string `json:"version"`
+				Enabled *bool  `json:"enabled"`
+			}
+			if err := json.Unmarshal(value, &details); err != nil {
+				return fmt.Errorf("dependency %s details: %w", key, err)
+			}
+			dep.Version = details.Version
+			if details.Enabled != nil {
+				dep.Enabled = *details.Enabled
+			}
+		default:
+			var anyValue any
+			if err := json.Unmarshal(value, &anyValue); err != nil {
+				return fmt.Errorf("dependency %s value: %w", key, err)
+			}
+			dep.Version = fmt.Sprint(anyValue)
+		}
+		result = append(result, dep)
+	}
+	*d = result
+	return nil
+}
+
+// ReadDependencies decodes modinfo.json dependencies from r. A missing
+// dependencies field returns an empty list. The reader is capped because
+// modinfo files are small and untrusted archives can be large.
+func ReadDependencies(r io.Reader) (DependencyList, error) {
+	var info struct {
+		Dependencies DependencyList `json:"dependencies"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r, 1<<20)).Decode(&info); err != nil {
+		return nil, err
+	}
+	return info.Dependencies, nil
 }
 
 // Mod is a search result from /api/mods.
@@ -41,15 +120,15 @@ type Mod struct {
 
 // Release is one release listed in a mod's detail response.
 type Release struct {
-	ReleaseID    int          `json:"releaseid"`
-	MainFile     string       `json:"mainfile"`
-	Filename     string       `json:"filename"`
-	Tags         []string     `json:"tags"`
-	ModIDStr     string       `json:"modidstr"`
-	ModVersion   string       `json:"modversion"`
-	Created      string       `json:"created"`
-	Changelog    string       `json:"changelog"`
-	Dependencies []Dependency `json:"dependencies"`
+	ReleaseID    int            `json:"releaseid"`
+	MainFile     string         `json:"mainfile"`
+	Filename     string         `json:"filename"`
+	Tags         []string       `json:"tags"`
+	ModIDStr     string         `json:"modidstr"`
+	ModVersion   string         `json:"modversion"`
+	Created      string         `json:"created"`
+	Changelog    string         `json:"changelog"`
+	Dependencies DependencyList `json:"dependencies"`
 }
 
 // ModDetail is the response from /api/mod/{idOrIdentifier}.
@@ -267,13 +346,12 @@ func validateZip(path string) error {
 
 // zipDependencies reads modinfo.json (at any depth) from the ZIP and returns
 // its dependencies. A missing modinfo.json is not an error.
-func zipDependencies(path string) ([]Dependency, error) {
+func zipDependencies(path string) (DependencyList, error) {
 	zr, err := zip.OpenReader(path)
 	if err != nil {
 		return nil, err
 	}
 	defer zr.Close()
-	var result []Dependency
 	for _, f := range zr.File {
 		if strings.ToLower(filepath.Base(f.Name)) != "modinfo.json" {
 			continue
@@ -282,18 +360,14 @@ func zipDependencies(path string) ([]Dependency, error) {
 		if err != nil {
 			return nil, fmt.Errorf("open %s: %w", f.Name, err)
 		}
-		var info struct {
-			Dependencies []Dependency `json:"dependencies"`
-		}
-		err = json.NewDecoder(io.LimitReader(rc, 1<<20)).Decode(&info)
+		deps, err := ReadDependencies(rc)
 		rc.Close()
 		if err != nil {
 			return nil, fmt.Errorf("parse %s: %w", f.Name, err)
 		}
-		result = info.Dependencies
-		break
+		return deps, nil
 	}
-	return result, nil
+	return nil, nil
 }
 
 func (c *Client) get(ctx context.Context, endpoint string) ([]byte, error) {

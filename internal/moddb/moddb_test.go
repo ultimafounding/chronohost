@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -144,5 +145,37 @@ func TestSanitizeFilename(t *testing.T) {
 		if got := sanitizeFilename(in); got != want {
 			t.Errorf("sanitizeFilename(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestDependencyListAcceptsObjectForm(t *testing.T) {
+	raw := `{"game":"1.22.0-pre.3","another-mod":"1.2.0"}`
+	var deps DependencyList
+	if err := json.Unmarshal([]byte(raw), &deps); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if len(deps) != 2 {
+		t.Fatalf("deps = %+v", deps)
+	}
+	if deps[0].ModID != "another-mod" || deps[0].Version != "1.2.0" || !deps[0].Enabled {
+		t.Errorf("deps[0] = %+v", deps[0])
+	}
+	if deps[1].ModID != "game" || deps[1].Version != "1.22.0-pre.3" || !deps[1].Enabled {
+		t.Errorf("deps[1] = %+v", deps[1])
+	}
+}
+
+func TestZipDependenciesAcceptsObjectForm(t *testing.T) {
+	data := zipWithModinfo(t, `{"modid":"nbcartographer","version":"2.3.0","dependencies":{"game":"1.22.0-pre.3"}}`)
+	path := filepath.Join(t.TempDir(), "nbcartographer_2.3.0.zip")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	deps, err := zipDependencies(path)
+	if err != nil {
+		t.Fatalf("zipDependencies: %v", err)
+	}
+	if len(deps) != 1 || deps[0].ModID != "game" || deps[0].Version != "1.22.0-pre.3" || !deps[0].Enabled {
+		t.Fatalf("deps = %+v", deps)
 	}
 }

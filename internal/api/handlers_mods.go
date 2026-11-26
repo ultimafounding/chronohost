@@ -3,7 +3,6 @@ package api
 import (
 	"archive/zip"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,12 +14,6 @@ import (
 	"github.com/jackm/chronohost/internal/notify"
 	"github.com/jackm/chronohost/internal/store"
 )
-
-type modInfo struct {
-	ModID        string             `json:"modid"`
-	Version      string             `json:"version"`
-	Dependencies []moddb.Dependency `json:"dependencies"`
-}
 
 func modDependencies(path string) []string {
 	r, err := zip.OpenReader(path)
@@ -36,17 +29,17 @@ func modDependencies(path string) []string {
 		if err != nil {
 			return nil
 		}
-		var info modInfo
-		err = json.NewDecoder(rc).Decode(&info)
+		deps, err := moddb.ReadDependencies(rc)
 		rc.Close()
 		if err != nil {
 			return nil
 		}
-		out := make([]string, 0, len(info.Dependencies))
-		for _, dep := range info.Dependencies {
-			if dep.Enabled && dep.ModID != "" {
-				out = append(out, dep.ModID)
+		out := make([]string, 0, len(deps))
+		for _, dep := range deps {
+			if !dep.Enabled || dep.ModID == "" || strings.EqualFold(dep.ModID, "game") {
+				continue
 			}
+			out = append(out, dep.ModID)
 		}
 		return out
 	}
