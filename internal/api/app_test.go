@@ -16,6 +16,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/jackm/chronohost/internal/config"
+	"github.com/jackm/chronohost/internal/process"
 )
 
 func TestApplicationFlow(t *testing.T) {
@@ -244,6 +245,70 @@ func TestApplicationFlow(t *testing.T) {
 	var denied consoleMessage
 	if err := conn.ReadJSON(&denied); err != nil || denied.Type != "error" || denied.Data != "read-only role" {
 		t.Fatalf("viewer console command = %+v (%v)", denied, err)
+	}
+
+	// An operator/admin command reaches the process stdin and is acknowledged.
+	script := filepath.Join(root, "console.sh")
+	scriptBody := "#!/bin/sh\nwhile IFS= read -r line; do echo \"got:$line\"; done\n"
+	if err := os.WriteFile(script, []byte(scriptBody), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := app.Procs.Start(process.Spec{
+		ID: created.ID, DataPath: created.DataPath, BinaryDir: root,
+		DLL: script, Dotnet: "/bin/sh", StopTimeout: time.Second,
+	}); err != nil {
+		t.Fatalf("start fake console server: %v", err)
+	}
+	defer app.Procs.Stop(created.ID, true)
+
+	adminJar, _ := cookiejar.New(nil)
+	adminClient := &http.Client{Jar: adminJar, CheckRedirect: func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}}
+	adminLogin, _ := http.NewRequest("POST", server.URL+"/login", strings.NewReader("username=root&password=a-very-secret-password&next=/"))
+	adminLogin.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	adminRes, err := adminClient.Do(adminLogin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	adminRes.Body.Close()
+
+	adminDialer := websocket.Dialer{Jar: adminJar}
+	adminConn, _, err := adminDialer.Dial(wsURL, http.Header{"Origin": []string{server.URL}})
+	if err != nil {
+		t.Fatalf("dial admin console: %v", err)
+	}
+	defer adminConn.Close()
+	adminConn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	var adminStatus consoleMessage
+	if err := adminConn.ReadJSON(&adminStatus); err != nil || adminStatus.Type != "status" {
+		t.Fatalf("admin console status = %+v (%v)", adminStatus, err)
+	}
+	data, _ := adminStatus.Data.(map[string]any)
+	if data["canCommand"] != true {
+		t.Fatalf("admin console is read-only: %+v", adminStatus)
+	}
+	if err := adminConn.WriteJSON(map[string]string{"type": "command", "command": "/listplayers"}); err != nil {
+		t.Fatal(err)
+	}
+	acked, echoed := false, false
+	for i := 0; i < 6 && !(acked && echoed); i++ {
+		var msg consoleMessage
+		if err := adminConn.ReadJSON(&msg); err != nil {
+			t.Fatalf("read admin console reply: %v", err)
+		}
+		switch msg.Type {
+		case "ack":
+			acked = true
+		case "line":
+			line, _ := msg.Line.(map[string]any)
+			if line["text"] == "got:/listplayers" {
+				echoed = true
+			}
+		}
+	}
+	if !acked || !echoed {
+		t.Fatalf("console command delivery: ack=%v echo=%v", acked, echoed)
 	}
 }
 

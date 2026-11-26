@@ -25,7 +25,7 @@
   <div class="card stat" data-tip="Resident memory used by the game process."><span class="value" id="tel-mem">{{.Telemetry.MemoryMB}} MB</span><span class="label">Memory</span></div>
 </div>
 
-<div x-data="{ tab: 'console' }">
+<div x-data="controls()">
   <div class="tabs">
     <button data-tip="Live log stream with command input." :class="{'active': tab==='console'}" @click="tab='console'">Live Console</button>
     <button data-tip="Mods installed in this instance." :class="{'active': tab==='mods'}" @click="tab='mods'">Mods ({{len .Mods}})</button>
@@ -40,10 +40,10 @@
       {{range $line := .Logs}}<div class="line {{$line.Level}}"><time>{{$line.Time.Format "15:04:05"}}</time><span class="text">{{$line.Text}}</span></div>{{end}}
     </div>
     <div class="console-input">
-      <span data-tip="Type a server command, for example /listplayers, then press Enter." style="flex:1"><input id="console-command" placeholder="/listplayers" x-on:keydown.enter="sendCommand()"></span>
-      <button class="btn" data-tip="Sends the command to the running server." @click="sendCommand()">Send</button>
+      <span data-tip="Type a server command, for example /listplayers, then press Enter." style="flex:1"><input id="console-command" placeholder="/listplayers" x-on:keydown.enter.prevent="sendCommand()"></span>
+      <button id="console-send" class="btn" data-tip="Sends the command to the running server." @click="sendCommand()">Send</button>
     </div>
-    <p class="hint">Type a server command and press Enter. Available to operators and administrators.</p>
+    <p class="hint" id="console-hint">Type a server command and press Enter. Available to operators and administrators.</p>
   </section>
 
   <section x-show="tab==='mods'" class="card">
@@ -137,7 +137,17 @@ function connectConsole() {
     if (msg.type === 'status') {
       const text = document.getElementById('status-text');
       if (text && msg.data.status) text.textContent = msg.data.status;
+      const input = document.getElementById('console-command');
+      const button = document.getElementById('console-send');
+      const hint = document.getElementById('console-hint');
+      const readOnly = msg.data.canCommand === false;
+      if (input) input.disabled = readOnly;
+      if (button) button.disabled = readOnly;
+      if (hint) hint.textContent = readOnly
+        ? 'Your role has read-only console access.'
+        : 'Type a server command and press Enter. Available to operators and administrators.';
     }
+    if (msg.type === 'ack') CH.toast('Command sent', 'success');
     if (msg.type === 'error') CH.toast(msg.data, 'error');
   };
   consoleSocket.onclose = () => setTimeout(connectConsole, 3000);
@@ -146,6 +156,7 @@ connectConsole();
 
 function controls() {
   return {
+    tab: 'console',
     status: '{{$in.Status}}',
     async act(action) {
       try {
@@ -156,7 +167,7 @@ function controls() {
     },
     sendCommand() {
       const input = document.getElementById('console-command');
-      if (!input || !input.value.trim()) return;
+      if (!input || input.disabled || !input.value.trim()) return;
       const command = input.value;
       input.value = '';
       if (consoleSocket && consoleSocket.readyState === 1) {
